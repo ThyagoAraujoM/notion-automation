@@ -1,0 +1,21 @@
+{
+  "name": "@notion-automation/env",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@t3-oss/env-core": "^0.13.11",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@notion-automation/eslint-config": "workspace:*",
+    "@notion-automation/typescript-config": "workspace:*",
+    "@types/node": "^22.15.3"
+  }
+}

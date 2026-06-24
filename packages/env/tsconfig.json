@@ -1,0 +1,7 @@
+{
+  "extends": "@notion-automation/typescript-config/base.json",
+  "include": ["index.ts"],
+  "compilerOptions": {
+    "types": ["node"]
+  }
+}
