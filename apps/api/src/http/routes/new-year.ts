@@ -1,3 +1,4 @@
+import { createYear } from "@/lib/createYear";
 import { FastifyInstance } from "fastify";
 import { ZodTypeProvider } from "fastify-type-provider-zod";
 import z from "zod";
@@ -10,22 +11,29 @@ export async function newYear(app: FastifyInstance) {
         tags: ["Rotine"],
         summary:
           "Create your entiry year pages routine, Year, Months, Weeks and days",
-        params: z.object({
-          notionToken: z.string(),
-        }),
+        // body: z.object({}),
         response: {
           200: z.object({
-            success: z.boolean,
+            success: z.boolean(),
             message: z.string(),
           }),
         },
       },
     },
     async (request, reply) => {
-      reply.status(200).send({
-        success: true,
-        message: "Routine created with success",
-      });
+      try {
+        await createYear();
+        reply.status(200).send({
+          success: true,
+          message: "Routine created with success",
+        });
+      } catch (error) {
+        console.log(error);
+        reply.status(200).send({
+          success: true,
+          message: "Erro",
+        });
+      }
     },
   );
 }
