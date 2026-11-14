@@ -3,7 +3,8 @@ import z = require("zod");
 
 export const env = dist.createEnv({
   server: {
-    PORT: z.coerce.number().default(3000),
+    PORT_BACKEND: z.coerce.number().default(4000),
+    PORT_FRONTEND: z.coerce.number().default(3000),
     DATABASE_URL: z.string(),
     NOTION_TOKEN: z.string(),
     YEAR_TOKEN: z.string(),
@@ -13,7 +14,8 @@ export const env = dist.createEnv({
     DAILY_TOKEN: z.string(),
   },
   runtimeEnv: {
-    PORT: process.env.PORT,
+    PORT_BACKEND: process.env.PORT_BACKEND,
+    PORT_FRONTEND: process.env.PORT_FRONTEND,
     DATABASE_URL: process.env.DATABASE_URL,
     NOTION_TOKEN: process.env.NOTION_TOKEN,
     YEAR_TOKEN: process.env.YEAR_TOKEN,

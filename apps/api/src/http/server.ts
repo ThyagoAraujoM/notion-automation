@@ -14,6 +14,6 @@ app.setValidatorCompiler(validatorCompiler);
 
 app.register(newYear);
 
-app.listen({ port: env.PORT }, () => {
-  console.log(`Server started in PORT ${env.PORT}`);
+app.listen({ port: env.PORT_BACKEND }, () => {
+  console.log(`Server started in PORT ${env.PORT_BACKEND}`);
 });
