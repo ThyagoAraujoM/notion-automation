@@ -48,11 +48,12 @@ Ambos carregam o `.env` da raiz via `dotenv -e ../../.env`.
 
 ## Rotas existentes
 
-| Método | Rota                            | Arquivo                             | Estado                                                                                                                  |
-| ------ | ------------------------------- | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| POST   | `/createYear`                   | `routes/new-year.ts`                | Cria a rotina anual completa (Ano → Dias) para `year` (padrão: ano atual); 409 se o ano já existe                       |
-| GET    | `/databases/:databaseId/schema` | `routes/get-database-schema.ts`     | Lista data sources e propriedades (id, nome, tipo + destino das relações) de um database; 404 se não existir/sem acesso |
-| GET    | `/docs` (+ `/docs/json`)        | `server.ts` (`@fastify/swagger-ui`) | Swagger UI / spec OpenAPI gerada dos schemas Zod                                                                        |
+| Método | Rota                            | Arquivo                             | Estado                                                                                                                                 |
+| ------ | ------------------------------- | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| POST   | `/createYear`                   | `routes/new-year.ts`                | Cria a rotina anual completa (Ano → Dias) para `year` (padrão: ano atual); 409 se o ano já existe                                      |
+| DELETE | `/deleteYear`                   | `routes/delete-year.ts`             | Manda para a lixeira do Notion o ano `year` (query, obrigatório) e todos os trimestres, meses, semanas e dias; 404 se o ano não existe |
+| GET    | `/databases/:databaseId/schema` | `routes/get-database-schema.ts`     | Lista data sources e propriedades (id, nome, tipo + destino das relações) de um database; 404 se não existir/sem acesso                |
+| GET    | `/docs` (+ `/docs/json`)        | `server.ts` (`@fastify/swagger-ui`) | Swagger UI / spec OpenAPI gerada dos schemas Zod                                                                                       |
 
 > Swagger: `@fastify/swagger` deve ser registrado **antes** das rotas em `server.ts`. Para uma rota aparecer
 > numa seção do docs, use `tags` no schema; a ordem das seções segue `openapi.tags`.

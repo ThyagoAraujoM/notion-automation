@@ -3,6 +3,7 @@ import fastify, { type FastifyError } from "fastify";
 import fastifySwagger from "@fastify/swagger";
 import fastifySwaggerUi from "@fastify/swagger-ui";
 import { newYear } from "./routes/new-year";
+import { deleteYearRoute } from "./routes/delete-year";
 import { getDatabaseSchemaRoute } from "./routes/get-database-schema";
 import {
   hasZodFastifySchemaValidationErrors,
@@ -75,6 +76,7 @@ app.register(fastifySwaggerUi, {
 });
 
 app.register(newYear);
+app.register(deleteYearRoute);
 app.register(getDatabaseSchemaRoute);
 
 app.listen({ port: env.PORT_BACKEND }, () => {
