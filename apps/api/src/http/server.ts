@@ -1,10 +1,11 @@
 import { env } from "@notion-automation/env";
-import fastify from "fastify";
+import fastify, { type FastifyError } from "fastify";
 import fastifySwagger from "@fastify/swagger";
 import fastifySwaggerUi from "@fastify/swagger-ui";
 import { newYear } from "./routes/new-year";
 import { getDatabaseSchemaRoute } from "./routes/get-database-schema";
 import {
+  hasZodFastifySchemaValidationErrors,
   jsonSchemaTransform,
   serializerCompiler,
   validatorCompiler,
@@ -15,6 +16,35 @@ const app = fastify().withTypeProvider<ZodTypeProvider>();
 
 app.setSerializerCompiler(serializerCompiler);
 app.setValidatorCompiler(validatorCompiler);
+
+// Erros de validação (body/params/query) saem no formato padrão { success, message }
+app.setErrorHandler<FastifyError>((error, request, reply) => {
+  if (hasZodFastifySchemaValidationErrors(error)) {
+    return reply.status(400).send({
+      success: false,
+      message: error.validation
+        .map((issue) => {
+          const field = issue.instancePath.replace(/\//g, ".");
+          return `${error.validationContext ?? "request"}${field}: ${issue.message}`;
+        })
+        .join("; "),
+    });
+  }
+
+  // Erros 4xx do próprio Fastify (JSON inválido, 415, 413...) mantêm o status original
+  const status = error.statusCode ?? 500;
+  if (status < 500) {
+    return reply
+      .status(status)
+      .send({ success: false, message: error.message });
+  }
+
+  request.log.error(error);
+  return reply.status(500).send({
+    success: false,
+    message: "Erro interno do servidor.",
+  });
+});
 
 // Swagger precisa ser registrado antes das rotas (coleta via hook onRoute)
 app.register(fastifySwagger, {
