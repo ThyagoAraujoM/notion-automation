@@ -9,6 +9,18 @@ Monorepo Turborepo + pnpm: `apps/api` (Fastify 5 + Zod 4 + `@notionhq/client` v5
 - [docs/convencoes.md](docs/convencoes.md) — padrões de código, nomes, commits
 - [docs/decisoes.md](docs/decisoes.md) — por que escolhemos X e não Y
 
+## Nomenclatura das páginas criadas no Notion
+
+| Nível     | Padrão                             | Exemplo                                                   |
+| --------- | ---------------------------------- | --------------------------------------------------------- |
+| Ano       | Ano completo                       | `2026`                                                    |
+| Trimestre | `T` + número                       | `T1`, `T2`, `T3`, `T4`                                    |
+| Mês       | Nome do mês em português           | `Janeiro`, `Fevereiro`...                                 |
+| Semana    | `Semana` + número crescente no ano | `Semana 1`, `Semana 2`...                                 |
+| Dia       | Dia da semana (com `" - Feira"`)   | `Segunda - Feira`, `Terça - Feira`... `Sábado`, `Domingo` |
+
+Detalhes (propriedades preenchidas, semanas, `Dia Nº`) em [docs/arquitetura.md](docs/arquitetura.md#rotina-anual-post-createyear).
+
 ## Comandos (na raiz)
 
 ```sh
@@ -37,7 +49,5 @@ Ainda não há testes.
 
 ## Pontos de atenção conhecidos
 
-- `new-year.ts`: o `catch` responde `success: true` com status 200 em caso de erro.
 - `apps/api/package.json`: `main` aponta para `server.tsx`, mas o arquivo é `server.ts`.
-- O ano está fixo como `"2026"` em `createYear.ts`.
 - `DATABASE_URL` é obrigatória no schema, mas ainda não é usada.
