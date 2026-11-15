@@ -73,6 +73,11 @@ sempre guardando o id do pai para a relação do filho. Resposta **201** com a c
 | Semana    | `Name`, `Semana nº`, `Data` (texto, ex.: `24 Nov ➝ 30 Nov`) | `Meses` → mês            |
 | Dia       | `Name`, `Dia Nº`, `Data` (date)                             | `Semana` → semana        |
 
+**`startToday` (`1` ou `0`, padrão `0`):** com `1`, cria só o que falta a partir de hoje — dias de hoje até 31/12,
+as semanas que ainda têm algum desses dias (mantendo a numeração do ano, ex.: `Semana 46`, e o rótulo completo da semana),
+os meses de hoje em diante, os trimestres de hoje em diante e o ano. Só vale para o **ano atual** (outro ano → **400**).
+Uma semana que começou no mês anterior liga ao primeiro mês criado. Se o ano já existir, continua 409.
+
 Regras do calendário:
 
 - Semanas vão de **segunda a domingo**; a Semana 1 é a que contém 1º de janeiro. Dias fora do ano não são criados, então a primeira e a última semana ficam "cortadas" (2026 tem 53 semanas).

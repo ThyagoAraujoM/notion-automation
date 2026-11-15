@@ -1,6 +1,6 @@
 import { env } from "@notion-automation/env";
 import { notion } from "./notion";
-import { buildYearPlan } from "./routineCalendar";
+import { buildYearPlan, trimPlanFrom } from "./routineCalendar";
 
 type PageProperties = NonNullable<
   Parameters<typeof notion.pages.create>[0]["properties"]
@@ -73,8 +73,33 @@ async function mapPool<T, R>(
   return results;
 }
 
-export async function createYear(year: number): Promise<CreateYearResult> {
-  const plan = buildYearPlan(year);
+export class InvalidStartTodayError extends Error {
+  constructor(year: number) {
+    super(
+      `startToday só pode ser usado com o ano atual (recebido ${year}, atual ${new Date().getFullYear()}).`,
+    );
+    this.name = "InvalidStartTodayError";
+  }
+}
+
+function todayIso() {
+  const d = new Date(); // data local do servidor
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+export async function createYear(
+  year: number,
+  startToday = false,
+): Promise<CreateYearResult> {
+  let plan = buildYearPlan(year);
+
+  if (startToday) {
+    if (year !== new Date().getFullYear()) {
+      throw new InvalidStartTodayError(year);
+    }
+    plan = trimPlanFrom(plan, todayIso());
+  }
 
   if (await yearExists(plan.name)) {
     throw new YearAlreadyExistsError(year);

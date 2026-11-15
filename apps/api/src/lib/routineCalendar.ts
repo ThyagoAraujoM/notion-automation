@@ -93,6 +93,41 @@ function formatShort(d: Date) {
   return `${d.getUTCDate()} ${MONTH_ABBR[d.getUTCMonth()]}`;
 }
 
+/**
+ * Mantém só o que falta a partir de `fromDate` ("YYYY-MM-DD"): dias >= fromDate,
+ * as semanas que ainda têm algum desses dias (com a numeração original do ano e o
+ * rótulo completo), e os meses/trimestres de `fromDate` em diante. Reindexa as referências.
+ */
+export function trimPlanFrom(plan: YearPlan, fromDate: string): YearPlan {
+  const days = plan.days.filter((d) => d.date >= fromDate);
+  const firstMonth = Number(fromDate.slice(5, 7)) - 1;
+
+  const months = plan.months.filter((_, i) => i >= firstMonth);
+  const firstQuarter = months[0]!.quarterIndex;
+  const quarters = plan.quarters.slice(firstQuarter);
+
+  const usedWeeks = [...new Set(days.map((d) => d.weekIndex))];
+  const weeks = usedWeeks.map((i) => plan.weeks[i]!);
+
+  return {
+    name: plan.name,
+    quarters,
+    months: months.map((m) => ({
+      ...m,
+      quarterIndex: m.quarterIndex - firstQuarter,
+    })),
+    weeks: weeks.map((w) => ({
+      ...w,
+      // A semana pode ter começado no mês anterior, que não será criado: liga ao 1º mês criado
+      monthIndex: Math.max(w.monthIndex - firstMonth, 0),
+    })),
+    days: days.map((d) => ({
+      ...d,
+      weekIndex: usedWeeks.indexOf(d.weekIndex),
+    })),
+  };
+}
+
 export function buildYearPlan(year: number): YearPlan {
   const quarters: QuarterPlan[] = [1, 2, 3, 4].map((n) => ({
     name: `T${n}`,

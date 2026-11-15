@@ -1,4 +1,8 @@
-import { createYear, YearAlreadyExistsError } from "@/lib/createYear";
+import {
+  createYear,
+  InvalidStartTodayError,
+  YearAlreadyExistsError,
+} from "@/lib/createYear";
 import { FastifyInstance } from "fastify";
 import { ZodTypeProvider } from "fastify-type-provider-zod";
 import z from "zod";
@@ -18,10 +22,12 @@ export async function newYear(app: FastifyInstance) {
           "Cria a rotina anual completa: Ano, Trimestres, Meses, Semanas e Dias",
         description:
           "Se `year` não for informado, usa o ano atual. Retorna 409 se o ano já existir. " +
+          "Com `startToday: 1` cria só o que falta a partir de hoje (dias, semanas, meses e trimestres restantes); só vale para o ano atual (senão 400). " +
           "A criação leva alguns minutos (~430 páginas, respeitando o limite de taxa do Notion).",
         body: z
           .object({
             year: z.coerce.number().int().min(1970).max(2100).optional(),
+            startToday: z.coerce.number().int().min(0).max(1).optional(),
           })
           .optional(),
         response: {
@@ -38,6 +44,7 @@ export async function newYear(app: FastifyInstance) {
               days: z.number(),
             }),
           }),
+          400: errorResponse,
           409: errorResponse,
           500: errorResponse,
         },
@@ -47,13 +54,21 @@ export async function newYear(app: FastifyInstance) {
       const year = request.body?.year ?? new Date().getFullYear();
 
       try {
-        const result = await createYear(year);
+        const startToday = request.body?.startToday === 1;
+        const result = await createYear(year, startToday);
         return reply.status(201).send({
           success: true,
-          message: `Rotina de ${year} criada com sucesso.`,
+          message: startToday
+            ? `Rotina de ${year} criada a partir de hoje com sucesso.`
+            : `Rotina de ${year} criada com sucesso.`,
           ...result,
         });
       } catch (error) {
+        if (error instanceof InvalidStartTodayError) {
+          return reply
+            .status(400)
+            .send({ success: false, message: error.message });
+        }
         if (error instanceof YearAlreadyExistsError) {
           return reply
             .status(409)
