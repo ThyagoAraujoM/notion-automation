@@ -26,7 +26,8 @@ Ainda não há testes.
 - `process.env` só via `@notion-automation/env`; variável nova vai em `server` **e** `runtimeEnv` de `packages/env/index.ts`.
 - As variáveis `*_TOKEN` de período são **IDs de database** do Notion, não tokens.
 - Rota = plugin em `apps/api/src/http/routes/`, registrada em `server.ts`. Regra de negócio fica em `apps/api/src/lib/`. Para criar rota, use a skill `criar-endpoint`.
-- Commits: Conventional Commits em português (`feat:`, `fix:`, `chore:`...). Só commite quando pedido.
+- Commits: Conventional Commits em português (`feat:`, `fix:`, `chore:`...).
+- **Um commit por implementação.** Ao terminar uma implementação (com lint/tipos ok), commite **antes** de começar a próxima, para que mudanças no mesmo arquivo não se misturem. Se já houver mudanças de mais de uma implementação pendentes, separe-as em commits distintos (stage parcial), nunca um commit único. Push só quando pedido. Detalhes em [docs/convencoes.md](docs/convencoes.md#commits).
 
 ## Fluxo de trabalho com modelos
 
