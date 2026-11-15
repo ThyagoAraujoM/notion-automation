@@ -26,6 +26,12 @@
 - Cada rota é um **plugin** em `src/http/routes/` e é registrada em `src/http/server.ts`.
 - Use `app.withTypeProvider<ZodTypeProvider>()` e declare `body`/`params`/`response` em `schema`.
 - Sem regra de negócio na rota: delegue para `src/lib/`.
+- **Descrição das rotas no Swagger:** `description` é uma lista em markdown, um item por linha (`[...].join("\n")`), nunca um texto corrido. Padrão:
+  - Seção `**Parâmetros**` com um item por parâmetro: ``- **`parametro`**: descrição do parâmetro.``
+  - Seção `**Respostas**` com um item por status: ``- **`409`**: quando acontece.``
+  - Avisos importantes em linha própria (`**Atenção**: ...`).
+  - Além disso, descreva cada campo do `body`/`params`/`query` com `.describe("...")` no Zod.
+  - Exemplo: `routes/new-year.ts`.
 - Erros: responda com status coerente (4xx/5xx) e `success: false`. Nunca `200` em caso de erro.
 
 ## Variáveis de ambiente

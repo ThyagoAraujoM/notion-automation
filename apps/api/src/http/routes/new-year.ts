@@ -18,18 +18,50 @@ export async function newYear(app: FastifyInstance) {
         tags: ["Rotine"],
         summary:
           "Cria a rotina anual completa (Ano, Trimestres, Meses, Semanas e Dias) ou repara um ano existente",
-        description:
-          "Se `year` não for informado, usa o ano atual. Sem `repair`, retorna 409 se o ano já existir. " +
-          "Com `repair: 1`, o ano precisa existir (senão 404): confere trimestres, meses, semanas e dias " +
-          "contra o calendário, cria o que faltar e religa o que estiver ligado ao pai errado. " +
-          "Com `startToday: 1`, considera só o que falta de hoje em diante (dias, semanas, meses e trimestres restantes); " +
-          "só vale para o ano atual (senão 400) e pode ser combinado com `repair`. " +
-          "A criação completa leva alguns minutos (~430 páginas, respeitando o limite de taxa do Notion).",
+        description: [
+          "**Parâmetros** (todos opcionais):",
+          "",
+          "- **`year`**: ano da rotina. Se não for informado, usa o ano atual.",
+          "- **`startToday`**: `1` ou `0` (padrão `0`). Com `1`, considera só o que falta de hoje em diante (dias, semanas, meses e trimestres restantes). Só vale para o ano atual, senão responde 400. Pode ser combinado com `repair`.",
+          "- **`repair`**: `1` ou `0` (padrão `0`). Com `1`, repara um ano que já existe: confere trimestres, meses, semanas e dias contra o calendário, cria o que faltar e religa o que estiver ligado ao pai errado. Se o ano não existir, responde 404.",
+          "",
+          "**Respostas**:",
+          "",
+          "- **`201`**: rotina criada.",
+          "- **`200`**: ano reparado (`repair: 1`), com a contagem de páginas criadas e religadas.",
+          "- **`400`**: `startToday` usado com um ano que não é o atual.",
+          "- **`404`**: `repair: 1` com um ano que não existe.",
+          "- **`409`**: o ano já existe (sem `repair`).",
+          "",
+          "**Atenção**: a criação completa leva alguns minutos (~430 páginas, respeitando o limite de taxa do Notion).",
+        ].join("\n"),
         body: z
           .object({
-            year: z.coerce.number().int().min(1970).max(2100).optional(),
-            startToday: z.coerce.number().int().min(0).max(1).optional(),
-            repair: z.coerce.number().int().min(0).max(1).optional(),
+            year: z.coerce
+              .number()
+              .int()
+              .min(1970)
+              .max(2100)
+              .optional()
+              .describe("Ano da rotina. Padrão: ano atual."),
+            startToday: z.coerce
+              .number()
+              .int()
+              .min(0)
+              .max(1)
+              .optional()
+              .describe(
+                "1 = só de hoje em diante (apenas ano atual); 0 = ano inteiro.",
+              ),
+            repair: z.coerce
+              .number()
+              .int()
+              .min(0)
+              .max(1)
+              .optional()
+              .describe(
+                "1 = repara um ano existente (cria o que falta e religa); 0 = cria o ano.",
+              ),
           })
           .optional(),
         response: {
