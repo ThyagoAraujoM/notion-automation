@@ -38,9 +38,10 @@
 
 - Conventional Commits em português: `feat:`, `fix:`, `chore:`, `docs:`, `refactor:`, `test:`.
 - Exemplo: `feat: cria trimestres ao gerar o ano`.
-- **Um commit por implementação.** Fluxo: implementar → `pnpm lint && pnpm check-types` → revisar → commitar → só então iniciar a próxima.
-  Assim cada commit contém só a lógica daquela implementação, mesmo quando várias tocam o mesmo arquivo (ex.: `server.ts`).
-- Se mudanças de implementações diferentes já estiverem misturadas, separe-as em commits distintos
+- **Commit só no final de todas as etapas.** Uma feature/funcionalidade pode ter várias etapas (lib, rota, docs...);
+  não se commita a cada etapa. Fluxo: implementar todas as etapas → `pnpm lint && pnpm check-types` → revisar → **um** commit.
+  Só depois de concluir o pedido por inteiro começa-se o próximo (que terá seu próprio commit).
+- Se mudanças de pedidos/funcionalidades diferentes já estiverem misturadas, separe-as em commits distintos
   (stage parcial do arquivo), na ordem em que foram feitas, cada uma compilando sozinha.
 - Correções descobertas durante uma implementação, mas que são globais (ex.: error handler), vão em commit próprio (`fix:`).
 - Push só quando pedido.

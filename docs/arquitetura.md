@@ -59,7 +59,7 @@ Ambos carregam o `.env` da raiz via `dotenv -e ../../.env`.
 
 ## Rotina anual (`POST /createYear`)
 
-Body opcional `{ "year": 2027 }` (sem `year` → ano atual). Código: `routes/new-year.ts` → `lib/createYear.ts` → `lib/routineCalendar.ts` (calendário puro).
+Body opcional `{ "year": 2027, "startToday": 0, "repair": 0 }` (sem `year` → ano atual). Código: `routes/new-year.ts` → `lib/createYear.ts` / `lib/repairYear.ts` → `lib/routineCalendar.ts` (calendário puro) e `lib/notionHelpers.ts` (consultas e propriedades).
 
 Fluxo: (1) resolve o ano → (2) consulta o database de anos pelo `Name`; se existir, **409** →
 (3) `buildYearPlan` calcula trimestres/meses/semanas/dias → (4–8) cria Ano → Trimestres → Meses → Semanas → Dias,
@@ -73,10 +73,20 @@ sempre guardando o id do pai para a relação do filho. Resposta **201** com a c
 | Semana    | `Name`, `Semana nº`, `Data` (texto, ex.: `24 Nov ➝ 30 Nov`) | `Meses` → mês            |
 | Dia       | `Name`, `Dia Nº`, `Data` (date)                             | `Semana` → semana        |
 
-**`startToday` (`1` ou `0`, padrão `0`):** com `1`, cria só o que falta a partir de hoje — dias de hoje até 31/12,
+**`startToday` (`1` ou `0`, padrão `0`):** com `1`, considera só o que falta a partir de hoje — dias de hoje até 31/12,
 as semanas que ainda têm algum desses dias (mantendo a numeração do ano, ex.: `Semana 46`, e o rótulo completo da semana),
-os meses de hoje em diante, os trimestres de hoje em diante e o ano. Só vale para o **ano atual** (outro ano → **400**).
-Uma semana que começou no mês anterior liga ao primeiro mês criado. Se o ano já existir, continua 409.
+os meses e trimestres de hoje em diante. Só vale para o **ano atual** (outro ano → **400**). Na criação, uma semana que
+começou no mês anterior liga ao primeiro mês criado; no `repair`, essa semana não é religada (o mês correto está fora do escopo).
+Se o ano já existir (sem `repair`), continua 409.
+
+**`repair` (`1` ou `0`, padrão `0`):** com `1`, em vez de criar, **repara** o ano informado (`lib/repairYear.ts`).
+O ano precisa existir (senão **404**). Fluxo: busca os trimestres ligados ao ano → os meses ligados a eles → as semanas
+ligadas aos meses; os **dias** são buscados pela propriedade `Data` (dentro do ano). Cada item do calendário é casado por
+número (`Número do Trimestre`, `Nº do mês`, `Semana nº`) ou data, com fallback no nome. O que falta é **criado e vinculado**;
+o que existe mas está ligado ao pai errado (ou a mais de um pai) é **religado** ao pai correto. Nomes e números de páginas
+existentes não são alterados. Resposta **200** com `created` e `relinked` (contagens).
+É idempotente (rodar de novo não duplica) e por isso não faz rollback. Limitação: semanas sem mês, ou trimestres/meses sem
+ligação ao ano, não são alcançáveis pela hierarquia e seriam recriados.
 
 Regras do calendário:
 

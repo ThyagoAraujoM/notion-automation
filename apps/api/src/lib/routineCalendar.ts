@@ -93,10 +93,28 @@ function formatShort(d: Date) {
   return `${d.getUTCDate()} ${MONTH_ABBR[d.getUTCMonth()]}`;
 }
 
+export class InvalidStartTodayError extends Error {
+  constructor(year: number) {
+    super(
+      `startToday só pode ser usado com o ano atual (recebido ${year}, atual ${new Date().getFullYear()}).`,
+    );
+    this.name = "InvalidStartTodayError";
+  }
+}
+
+function todayIso() {
+  const d = new Date(); // data local do servidor
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
 /**
  * Mantém só o que falta a partir de `fromDate` ("YYYY-MM-DD"): dias >= fromDate,
  * as semanas que ainda têm algum desses dias (com a numeração original do ano e o
  * rótulo completo), e os meses/trimestres de `fromDate` em diante. Reindexa as referências.
+ *
+ * `WeekPlan.monthIndex` pode sair **negativo**: a semana começou num mês anterior que
+ * não está mais no plano. Quem usa deve tratar (criação liga ao 1º mês; reparo não religa).
  */
 export function trimPlanFrom(plan: YearPlan, fromDate: string): YearPlan {
   const days = plan.days.filter((d) => d.date >= fromDate);
@@ -107,7 +125,6 @@ export function trimPlanFrom(plan: YearPlan, fromDate: string): YearPlan {
   const quarters = plan.quarters.slice(firstQuarter);
 
   const usedWeeks = [...new Set(days.map((d) => d.weekIndex))];
-  const weeks = usedWeeks.map((i) => plan.weeks[i]!);
 
   return {
     name: plan.name,
@@ -116,16 +133,23 @@ export function trimPlanFrom(plan: YearPlan, fromDate: string): YearPlan {
       ...m,
       quarterIndex: m.quarterIndex - firstQuarter,
     })),
-    weeks: weeks.map((w) => ({
-      ...w,
-      // A semana pode ter começado no mês anterior, que não será criado: liga ao 1º mês criado
-      monthIndex: Math.max(w.monthIndex - firstMonth, 0),
-    })),
+    weeks: usedWeeks.map((i) => {
+      const w = plan.weeks[i]!;
+      return { ...w, monthIndex: w.monthIndex - firstMonth };
+    }),
     days: days.map((d) => ({
       ...d,
       weekIndex: usedWeeks.indexOf(d.weekIndex),
     })),
   };
+}
+
+/** Plano do ano; com `startToday`, só de hoje em diante (e apenas para o ano atual). */
+export function buildPlan(year: number, startToday: boolean): YearPlan {
+  const plan = buildYearPlan(year);
+  if (!startToday) return plan;
+  if (year !== new Date().getFullYear()) throw new InvalidStartTodayError(year);
+  return trimPlanFrom(plan, todayIso());
 }
 
 export function buildYearPlan(year: number): YearPlan {
