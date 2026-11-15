@@ -12,6 +12,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@fastify/swagger": "^9.9.4",
+    "@fastify/swagger-ui": "^6.1.3",
     "@notion-automation/env": "workspace:*",
     "@notionhq/client": "^5.22.0",
     "dotenv": "^17.4.2",

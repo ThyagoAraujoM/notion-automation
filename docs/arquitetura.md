@@ -18,13 +18,13 @@ Cada nível vive em um **database próprio do Notion**. As variáveis `*_TOKEN` 
 
 ## Monorepo
 
-| Pacote | Papel |
-| --- | --- |
-| `apps/api` | API Fastify que fala com o Notion |
-| `apps/web` | Front Next.js (ainda template) |
-| `packages/env` | Schema Zod + validação das variáveis de ambiente |
-| `packages/ui` | Componentes React compartilhados |
-| `packages/eslint-config`, `packages/typescript-config` | Configs compartilhadas |
+| Pacote                                                 | Papel                                            |
+| ------------------------------------------------------ | ------------------------------------------------ |
+| `apps/api`                                             | API Fastify que fala com o Notion                |
+| `apps/web`                                             | Front Next.js (ainda template)                   |
+| `packages/env`                                         | Schema Zod + validação das variáveis de ambiente |
+| `packages/ui`                                          | Componentes React compartilhados                 |
+| `packages/eslint-config`, `packages/typescript-config` | Configs compartilhadas                           |
 
 ## Fluxo de uma requisição (API)
 
@@ -39,18 +39,22 @@ HTTP ─▶ src/http/server.ts ─▶ src/http/routes/<rota>.ts ─▶ src/lib/<
 
 ## Portas
 
-| App | Variável | Padrão |
-| --- | --- | --- |
-| API | `PORT_BACKEND` | 4000 |
-| Web | `PORT_FRONTEND` | 3000 |
+| App | Variável        | Padrão |
+| --- | --------------- | ------ |
+| API | `PORT_BACKEND`  | 4000   |
+| Web | `PORT_FRONTEND` | 3000   |
 
 Ambos carregam o `.env` da raiz via `dotenv -e ../../.env`.
 
 ## Rotas existentes
 
-| Método | Rota | Arquivo | Estado |
-| --- | --- | --- | --- |
-| POST | `/createYear` | `routes/new-year.ts` | Cria só a página do ano (fixo "2026") |
+| Método | Rota                            | Arquivo                             | Estado                                                                                                                  |
+| ------ | ------------------------------- | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| POST   | `/createYear`                   | `routes/new-year.ts`                | Cria só a página do ano (fixo "2026")                                                                                   |
+| GET    | `/docs` (+ `/docs/json`)        | `server.ts` (`@fastify/swagger-ui`) | Swagger UI / spec OpenAPI gerada dos schemas Zod                                                                        |
+
+> Swagger: `@fastify/swagger` deve ser registrado **antes** das rotas em `server.ts`. Para uma rota aparecer
+> numa seção do docs, use `tags` no schema; a ordem das seções segue `openapi.tags`.
 
 ## A preencher
 
