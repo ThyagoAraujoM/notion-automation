@@ -3,6 +3,7 @@ import fastify from "fastify";
 import fastifySwagger from "@fastify/swagger";
 import fastifySwaggerUi from "@fastify/swagger-ui";
 import { newYear } from "./routes/new-year";
+import { getDatabaseSchemaRoute } from "./routes/get-database-schema";
 import {
   jsonSchemaTransform,
   serializerCompiler,
@@ -30,6 +31,10 @@ app.register(fastifySwagger, {
         description:
           "Geração da rotina Ano → Trimestres → Meses → Semanas → Dias",
       },
+      {
+        name: "Database",
+        description: "Inspeção da estrutura dos databases do Notion",
+      },
     ],
   },
   transform: jsonSchemaTransform,
@@ -40,6 +45,7 @@ app.register(fastifySwaggerUi, {
 });
 
 app.register(newYear);
+app.register(getDatabaseSchemaRoute);
 
 app.listen({ port: env.PORT_BACKEND }, () => {
   console.log(`Server started in PORT ${env.PORT_BACKEND}`);

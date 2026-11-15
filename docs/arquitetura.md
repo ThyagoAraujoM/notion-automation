@@ -51,6 +51,7 @@ Ambos carregam o `.env` da raiz via `dotenv -e ../../.env`.
 | Método | Rota                            | Arquivo                             | Estado                                                                                                                  |
 | ------ | ------------------------------- | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | POST   | `/createYear`                   | `routes/new-year.ts`                | Cria só a página do ano (fixo "2026")                                                                                   |
+| GET    | `/databases/:databaseId/schema` | `routes/get-database-schema.ts`     | Lista data sources e propriedades (id, nome, tipo + destino das relações) de um database; 404 se não existir/sem acesso |
 | GET    | `/docs` (+ `/docs/json`)        | `server.ts` (`@fastify/swagger-ui`) | Swagger UI / spec OpenAPI gerada dos schemas Zod                                                                        |
 
 > Swagger: `@fastify/swagger` deve ser registrado **antes** das rotas em `server.ts`. Para uma rota aparecer
