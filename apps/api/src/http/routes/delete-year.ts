@@ -1,5 +1,6 @@
 import { deleteYear } from "@/lib/deleteYear";
 import { YearNotFoundError } from "@/lib/repairYear";
+import { saveDeletedYearLog } from "@/lib/saveLog";
 import { FastifyInstance } from "fastify";
 import { ZodTypeProvider } from "fastify-type-provider-zod";
 import z from "zod";
@@ -62,11 +63,13 @@ export async function deleteYearRoute(app: FastifyInstance) {
 
       try {
         const result = await deleteYear(year);
-        return reply.status(200).send({
+        const body = {
           success: true,
           message: `Rotina de ${year} enviada para a lixeira do Notion.`,
           ...result,
-        });
+        };
+        await saveDeletedYearLog(body).catch((e) => request.log.error(e));
+        return reply.status(200).send(body);
       } catch (error) {
         if (error instanceof YearNotFoundError) {
           return reply

@@ -1,0 +1,27 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// Resposta (sucesso) devolvida por POST /createYear, junto do momento em que ocorreu.
+model LogCreateYear {
+  id        Int      @id @default(autoincrement())
+  response  Json
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("log_create_year")
+}
+
+/// Resposta (sucesso) devolvida por DELETE /deleteYear, junto do momento em que ocorreu.
+model LogDeletedYear {
+  id        Int      @id @default(autoincrement())
+  response  Json
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("log_deleted_year")
+}

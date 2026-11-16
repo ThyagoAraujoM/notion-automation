@@ -1,6 +1,7 @@
 import { createYear, YearAlreadyExistsError } from "@/lib/createYear";
 import { repairYear, YearNotFoundError } from "@/lib/repairYear";
 import { InvalidStartTodayError } from "@/lib/routineCalendar";
+import { saveCreateYearLog } from "@/lib/saveLog";
 import { FastifyInstance } from "fastify";
 import { ZodTypeProvider } from "fastify-type-provider-zod";
 import z from "zod";
@@ -111,19 +112,23 @@ export async function newYear(app: FastifyInstance) {
       try {
         if (repair) {
           const result = await repairYear(year, startToday);
-          return reply.status(200).send({
+          const body = {
             success: true,
             message: `Rotina de ${year}${scope} conferida e reparada com sucesso.`,
             ...result,
-          });
+          };
+          await saveCreateYearLog(body).catch((e) => request.log.error(e));
+          return reply.status(200).send(body);
         }
 
         const result = await createYear(year, startToday);
-        return reply.status(201).send({
+        const body = {
           success: true,
           message: `Rotina de ${year}${scope} criada com sucesso.`,
           ...result,
-        });
+        };
+        await saveCreateYearLog(body).catch((e) => request.log.error(e));
+        return reply.status(201).send(body);
       } catch (error) {
         if (error instanceof InvalidStartTodayError) {
           return reply

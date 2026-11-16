@@ -28,6 +28,8 @@ pnpm dev                                    # todos os apps (API :4000, Web :300
 pnpm dev --filter=@notion-automation/api    # só a API
 pnpm lint && pnpm check-types               # rode antes de dar uma tarefa por concluída
 pnpm format
+pnpm db:up                                  # sobe o Postgres (Docker); db:down / db:logs
+pnpm --filter=@notion-automation/api db:migrate   # nova migration em dev
 ```
 
 Ainda não há testes.
@@ -51,4 +53,4 @@ Ainda não há testes.
 ## Pontos de atenção conhecidos
 
 - `apps/api/package.json`: `main` aponta para `server.tsx`, mas o arquivo é `server.ts`.
-- `DATABASE_URL` é obrigatória no schema, mas ainda não é usada.
+- A API precisa do Postgres no ar (`pnpm db:up`) e de `DATABASE_URL` no `.env`; as rotas createYear/deleteYear gravam log no banco.

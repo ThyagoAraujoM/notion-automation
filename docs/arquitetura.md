@@ -97,9 +97,20 @@ Regras do calendário:
 - Se algo falhar no meio, as páginas já criadas vão para a lixeira (rollback best-effort), para o ano poder ser gerado de novo.
 - Criação com no máximo 3 chamadas simultâneas (limite ~3 req/s do Notion); ~430 páginas levam alguns minutos e a requisição só responde no final.
 
+## Banco de dados (PostgreSQL + Prisma)
+
+- Postgres 17 local via Docker (`docker-compose.yml` na raiz): `pnpm db:up` / `pnpm db:down` / `pnpm db:logs`.
+- Variáveis no `.env` da raiz: `DATABASE_URL` (ex.: `postgresql://notion:notion@localhost:5432/notion_automation`) e, opcionalmente, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `POSTGRES_PORT` (padrões: `notion` / `notion` / `notion_automation` / `5432`).
+- Prisma 7 em `apps/api/prisma/` (`schema.prisma`, `migrations/`) com `prisma.config.ts` e driver adapter `pg`. O client é gerado em `apps/api/src/generated/prisma` (ignorado no git; `pnpm --filter=@notion-automation/api db:generate`, também roda no `postinstall`).
+- Client único em `apps/api/src/lib/prisma.ts`; a conexão fecha no hook `onClose` do `server.ts`.
+- Comandos (em `apps/api`): `db:migrate` (cria/aplica migration em dev), `db:deploy`, `db:studio`.
+- Tabelas (uma migration cada), ambas com `id`, `response` (JSON) e `created_at`:
+  - `log_create_year`: resposta de sucesso (201 e 200 do `repair`) de `POST /createYear`.
+  - `log_deleted_year`: resposta de sucesso de `DELETE /deleteYear`.
+- A gravação do log acontece depois da operação no Notion; se o insert falhar, o erro só é logado e a resposta da rota não muda.
+
 ## A preencher
 
 - [x] Como os níveis se relacionam (propriedades de relação no Notion) — ver tabela acima
 - [x] Estratégia para evitar duplicatas (ano já existe?) — consulta por `Name` no database de anos
-- [ ] Uso do `DATABASE_URL` (persistência local?)
 - [ ] Papel do app `web`
