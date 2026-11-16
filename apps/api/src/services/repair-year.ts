@@ -5,15 +5,20 @@ import {
   CONCURRENCY,
   dateProp,
   findYearPageId,
+  loadTemplates,
   mapPool,
+  mapSequential,
   numberProp,
   queryAll,
   relation,
   relationIds,
   richText,
   title,
+  templateById,
   titleProp,
   type PageProperties,
+  type PageTemplate,
+  type TemplateLevel,
 } from "@/integrations/notion/helpers";
 import { buildPlan, MONTH_NAMES } from "@/utils/routine-calendar";
 
@@ -76,14 +81,29 @@ export async function repairYear(
   const yearId = await findYearPageId(plan.name);
   if (!yearId) throw new YearNotFoundError(year);
 
+  // Valida os templates antes de criar qualquer página (mesma regra do createYear)
+  const templates = await loadTemplates({
+    quarter: plan.quarters.map((q) => q.name),
+    month: plan.months.map((m) => m.name),
+    week: plan.weeks.map((w) => w.name),
+    day: plan.days.map((d) => d.name),
+  });
+  const tpl = (level: TemplateLevel, name: string) =>
+    templateById(templates, level, name);
+
   const created = { quarters: 0, months: 0, weeks: 0, days: 0 };
   const relinked = { months: 0, weeks: 0, days: 0 };
 
-  const createPage = async (databaseId: string, properties: PageProperties) =>
+  const createPage = async (
+    databaseId: string,
+    properties: PageProperties,
+    template: PageTemplate,
+  ) =>
     (
       await notion.pages.create({
         parent: { database_id: databaseId },
         properties,
+        template,
       })
     ).id;
 
@@ -114,15 +134,19 @@ export async function repairYear(
       numberProp(p.properties, "Número do Trimestre") ??
       matchNumber(titleProp(p.properties, "Name"), /^T(\d)$/i),
   );
-  const quarterIds = await mapPool(plan.quarters, CONCURRENCY, async (q) => {
+  const quarterIds = await mapSequential(plan.quarters, async (q) => {
     const found = quarterByNumber.get(q.number);
     if (found) return found.id;
     created.quarters++;
-    return createPage(env.QUARTERLY_TOKEN, {
-      Name: title(q.name),
-      "Número do Trimestre": { number: q.number },
-      Anos: relation(yearId),
-    });
+    return createPage(
+      env.QUARTERLY_TOKEN,
+      {
+        Name: title(q.name),
+        "Número do Trimestre": { number: q.number },
+        Anos: relation(yearId),
+      },
+      tpl("quarter", q.name),
+    );
   });
 
   // Meses: tudo que está sob os trimestres do ano
@@ -144,7 +168,7 @@ export async function repairYear(
       numberProp(p.properties, "Nº do mês") ?? (byName >= 0 ? byName + 1 : null)
     );
   });
-  const monthIds = await mapPool(plan.months, CONCURRENCY, async (m) => {
+  const monthIds = await mapSequential(plan.months, async (m) => {
     const parentId = quarterIds[m.quarterIndex]!;
     const found = monthByNumber.get(m.number);
     if (found) {
@@ -152,11 +176,15 @@ export async function repairYear(
       return found.id;
     }
     created.months++;
-    return createPage(env.MONTHLY_TOKEN, {
-      Name: title(m.name),
-      "Nº do mês": { number: m.number },
-      Trimestres: relation(parentId),
-    });
+    return createPage(
+      env.MONTHLY_TOKEN,
+      {
+        Name: title(m.name),
+        "Nº do mês": { number: m.number },
+        Trimestres: relation(parentId),
+      },
+      tpl("month", m.name),
+    );
   });
 
   // Semanas: tudo que está sob os meses do ano
@@ -176,7 +204,7 @@ export async function repairYear(
       numberProp(p.properties, "Semana nº") ??
       matchNumber(titleProp(p.properties, "Name"), /^Semana (\d+)/i),
   );
-  const weekIds = await mapPool(plan.weeks, CONCURRENCY, async (w) => {
+  const weekIds = await mapSequential(plan.weeks, async (w) => {
     // monthIndex < 0 (startToday): o mês de origem da semana está fora do plano
     const parentId = monthIds[Math.max(w.monthIndex, 0)]!;
     const found = weekByNumber.get(w.number);
@@ -188,12 +216,16 @@ export async function repairYear(
       return found.id;
     }
     created.weeks++;
-    return createPage(env.WEEKLY_TOKEN, {
-      Name: title(w.name),
-      "Semana nº": { number: w.number },
-      Data: richText(w.label),
-      Meses: relation(parentId),
-    });
+    return createPage(
+      env.WEEKLY_TOKEN,
+      {
+        Name: title(w.name),
+        "Semana nº": { number: w.number },
+        Data: richText(w.label),
+        Meses: relation(parentId),
+      },
+      tpl("week", w.name),
+    );
   });
 
   // Dias: localizados pela Data (mesmo que estejam sem semana)
@@ -204,7 +236,7 @@ export async function repairYear(
     ],
   });
   const dayByDate = indexBy(dayPages, (p) => dateProp(p.properties, "Data"));
-  await mapPool(plan.days, CONCURRENCY, async (d) => {
+  await mapSequential(plan.days, async (d) => {
     const parentId = weekIds[d.weekIndex]!;
     const found = dayByDate.get(d.date);
     if (found) {
@@ -212,12 +244,16 @@ export async function repairYear(
       return;
     }
     created.days++;
-    await createPage(env.DAILY_TOKEN, {
-      Name: title(d.name),
-      "Dia Nº": { number: d.weekdayNumber },
-      Data: { date: { start: d.date } },
-      Semana: relation(parentId),
-    });
+    await createPage(
+      env.DAILY_TOKEN,
+      {
+        Name: title(d.name),
+        "Dia Nº": { number: d.weekdayNumber },
+        Data: { date: { start: d.date } },
+        Semana: relation(parentId),
+      },
+      tpl("day", d.name),
+    );
   });
 
   return { year, yearPageId: yearId, created, relinked };

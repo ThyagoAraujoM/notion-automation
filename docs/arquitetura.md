@@ -66,8 +66,9 @@ Ambos carregam o `.env` da raiz via `dotenv -e ../../.env`.
 Body opcional `{ "year": 2027, "startToday": 0, "repair": 0 }` (sem `year` → ano atual). Código: `routes/new-year.ts` → `services/create-year.ts` / `services/repair-year.ts` → `utils/routine-calendar.ts` (calendário puro) e `integrations/notion/helpers.ts` (consultas e propriedades).
 
 Fluxo: (1) resolve o ano → (2) consulta o database de anos pelo `Name`; se existir, **409** →
-(3) `buildYearPlan` calcula trimestres/meses/semanas/dias → (4–8) cria Ano → Trimestres → Meses → Semanas → Dias,
-sempre guardando o id do pai para a relação do filho. Resposta **201** com a contagem do que foi criado.
+(3) `buildYearPlan` calcula trimestres/meses/semanas/dias → (4) busca os templates de cada database e valida que existem (senão **422**, sem criar nada) →
+(5–9) cria Ano → Trimestres → Meses → Semanas → Dias, sempre guardando o id do pai para a relação do filho.
+Resposta **201** com a contagem do que foi criado.
 
 | Nível     | Propriedades preenchidas                                    | Relação com o pai        |
 | --------- | ----------------------------------------------------------- | ------------------------ |
@@ -92,13 +93,19 @@ existentes não são alterados. Resposta **200** com `created` e `relinked` (con
 É idempotente (rodar de novo não duplica) e por isso não faz rollback. Limitação: semanas sem mês, ou trimestres/meses sem
 ligação ao ano, não são alcançáveis pela hierarquia e seriam recriados.
 
+**Templates:** cada página é criada com um template do database (`pages.create` com `template`). O **ano** usa o template
+padrão (`type: "default"`); trimestre, mês, semana e dia usam o template **de mesmo nome da página** (`T1`, `Janeiro`,
+`Semana 12`, `Segunda - Feira`...), buscado por `dataSources.listTemplates` a cada chamada (sem cache). Se faltar algum nome
+(ex.: `Semana 53` num ano de 53 semanas), a rota responde **422** listando os que faltam, antes de criar qualquer página.
+O `repair` aplica a mesma regra às páginas que ele cria.
+
 Regras do calendário:
 
 - Semanas vão de **segunda a domingo**; a Semana 1 é a que contém 1º de janeiro. Dias fora do ano não são criados, então a primeira e a última semana ficam "cortadas" (2026 tem 53 semanas).
 - Cada semana liga a **um** mês: o do seu primeiro dia dentro do ano.
 - `Dia Nº` é o dia da semana, **Domingo = 1 … Sábado = 7** (padrão que já existia no database).
 - Se algo falhar no meio, as páginas já criadas vão para a lixeira (rollback best-effort), para o ano poder ser gerado de novo.
-- Criação com no máximo 3 chamadas simultâneas (limite ~3 req/s do Notion); ~430 páginas levam alguns minutos e a requisição só responde no final.
+- Criação **uma página por vez** (`mapSequential`): com template + relação, criar em paralelo fez o Notion mandar páginas para a lixeira (ver decisão 006) e embaralhava a ordem dos filhos na relação do pai. ~430 páginas levam ~6–7 min e a requisição só responde no final; o Fastify roda sem timeout de conexão/requisição, e o cliente também não pode ter.
 
 ## Banco de dados (PostgreSQL + Prisma)
 

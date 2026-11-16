@@ -58,8 +58,18 @@
 - **Alternativas:** rodar a API também no Docker (descartado por ora).
 - **Consequências:** é preciso subir o banco (`pnpm db:up`) antes da API. A CLI `prisma` está fixa em `7.10.1` (o tag `latest` já aponta para a 8 rc).
 
+## 006 — Templates por nome e criação sequencial
+
+- **Data:** 2026-11-16
+- **Status:** aceita
+- **Contexto:** as páginas criadas pela API precisam sair com o conteúdo dos templates dos databases. Os databases têm 76 templates (1 ano, 4 trimestres, 12 meses, 53 semanas, 7 dias), nomeados exatamente como as páginas geradas.
+- **Decisão:** buscar os templates (`dataSources.listTemplates`) a cada chamada e casá-los **pelo nome**, validando tudo antes de criar (422 se faltar); o ano usa o template padrão. Criar as páginas **uma por vez**.
+- **Alternativas:** IDs de template em variáveis de ambiente (descartado: ~76 IDs); cache em banco (descartado: desatualiza e é pouco chamado). Criar com 3 simultâneas (descartado: em teste, template + relação em paralelo mandou 3 de 28 dias para a lixeira, sem erro; sem template ou sequencial, 0 perdas — e a ordem dos filhos na relação do pai também embaralhava).
+- **Consequências:** ~430 páginas levam ~6–7 min numa única requisição HTTP (sem timeout no servidor). Renomear um template no Notion passa a dar 422. A perda silenciosa de páginas foi contornada, não explicada pelo Notion; nada detecta se voltar. Validado à mão em nov–dez/2026 (57 páginas, 0 perdidas, ordem correta) e criando um ano pela API; o `repair` com template **não foi testado ao vivo**.
+
 ## Pendentes
 
 - [ ] Padrão de nomes para rotas HTTP
-- [ ] Framework de testes (Vitest?)
+- [ ] Framework de testes (Vitest?) — incluir criar/reparar ano com template, ordem dos filhos e detecção de página perdida (hoje a validação foi manual)
+- [ ] Traduzir o projeto (i18n): mensagens de erro/respostas da API hoje misturam português e rótulos em inglês (ex.: 422 de templates usa `quarter:`, `week:`...)
 - [ ] Como relacionar os níveis no Notion

@@ -33,6 +33,92 @@ export async function getDataSourceId(databaseId: string) {
   return db.data_sources[0].id;
 }
 
+export type TemplateLevel = "quarter" | "month" | "week" | "day";
+/** Nome do template → id, por nível (o ano usa o template padrão do database). */
+export type Templates = Record<TemplateLevel, Map<string, string>>;
+
+export class MissingTemplatesError extends Error {
+  constructor(public readonly missing: Record<TemplateLevel, string[]>) {
+    const detail = Object.entries(missing)
+      .filter(([, names]) => names.length > 0)
+      .map(([level, names]) => `${level}: ${names.join(", ")}`)
+      .join(" | ");
+    super(`Templates não encontrados no Notion (${detail}).`);
+    this.name = "MissingTemplatesError";
+  }
+}
+
+/** Templates de um database como `nome → id` (percorre a paginação). */
+async function listTemplates(databaseId: string) {
+  const data_source_id = await getDataSourceId(databaseId);
+  const byName = new Map<string, string>();
+  let cursor: string | undefined;
+  do {
+    const res = await notion.dataSources.listTemplates({
+      data_source_id,
+      start_cursor: cursor,
+      page_size: 100,
+    });
+    for (const t of res.templates) byName.set(t.name, t.id);
+    cursor = res.has_more ? (res.next_cursor ?? undefined) : undefined;
+  } while (cursor);
+  return byName;
+}
+
+/**
+ * Busca os templates dos databases de trimestre, mês, semana e dia e confirma que
+ * todos os nomes em `needed` existem, antes de qualquer página ser criada.
+ */
+export async function loadTemplates(
+  needed: Record<TemplateLevel, string[]>,
+): Promise<Templates> {
+  const [quarter, month, week, day] = await Promise.all([
+    listTemplates(env.QUARTERLY_TOKEN),
+    listTemplates(env.MONTHLY_TOKEN),
+    listTemplates(env.WEEKLY_TOKEN),
+    listTemplates(env.DAILY_TOKEN),
+  ]);
+  const templates: Templates = { quarter, month, week, day };
+
+  const missing = { quarter: [], month: [], week: [], day: [] } as Record<
+    TemplateLevel,
+    string[]
+  >;
+  for (const level of Object.keys(needed) as TemplateLevel[]) {
+    missing[level] = [...new Set(needed[level])].filter(
+      (name) => !templates[level].has(name),
+    );
+  }
+  if (Object.values(missing).some((names) => names.length > 0)) {
+    throw new MissingTemplatesError(missing);
+  }
+  return templates;
+}
+
+/** Valor do parâmetro `template` do `pages.create` (padrão do database ou um template). */
+export type PageTemplate =
+  | { type: "default" }
+  | { type: "template_id"; template_id: string };
+
+/** Template do nível com o nome da página; erro explícito se não existir. */
+export function templateById(
+  templates: Templates,
+  level: TemplateLevel,
+  name: string,
+): PageTemplate {
+  const template_id = templates[level].get(name);
+  if (!template_id) {
+    throw new MissingTemplatesError({
+      quarter: [],
+      month: [],
+      week: [],
+      day: [],
+      [level]: [name],
+    });
+  }
+  return { type: "template_id", template_id };
+}
+
 /** Id da página do ano com esse `Name`, ou `null` se não existir. */
 export async function findYearPageId(name: string) {
   const res = await notion.dataSources.query({
@@ -82,6 +168,20 @@ export const relationIds = (props: PageProps, name: string) => {
   const p = props[name];
   return p?.type === "relation" ? p.relation.map((r) => r.id) : [];
 };
+
+/**
+ * Executa `fn` um item por vez, na ordem. Usado para criar páginas: o Notion lista os
+ * filhos na relação do pai na ordem de criação, e criar em paralelo com template +
+ * relação fez páginas irem para a lixeira (ver docs/decisoes.md, 006).
+ */
+export async function mapSequential<T, R>(
+  items: T[],
+  fn: (item: T, index: number) => Promise<R>,
+): Promise<R[]> {
+  const results: R[] = [];
+  for (const [i, item] of items.entries()) results.push(await fn(item, i));
+  return results;
+}
 
 /** Executa `fn` sobre os itens com no máximo `limit` chamadas simultâneas, preservando a ordem. */
 export async function mapPool<T, R>(

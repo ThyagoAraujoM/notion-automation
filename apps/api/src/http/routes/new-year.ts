@@ -1,5 +1,6 @@
 import { createYear, YearAlreadyExistsError } from "@/services/create-year";
 import { repairYear, YearNotFoundError } from "@/services/repair-year";
+import { MissingTemplatesError } from "@/integrations/notion/helpers";
 import { InvalidStartTodayError } from "@/utils/routine-calendar";
 import { saveCreateYearLog } from "@/db/save-log";
 import { FastifyInstance } from "fastify";
@@ -33,8 +34,9 @@ export async function newYear(app: FastifyInstance) {
           "- **`400`**: `startToday` usado com um ano que não é o atual.",
           "- **`404`**: `repair: 1` com um ano que não existe.",
           "- **`409`**: o ano já existe (sem `repair`).",
+          "- **`422`**: faltam templates no Notion (a resposta lista os nomes); nada é criado (vale também para `repair`).",
           "",
-          "**Atenção**: a criação completa leva alguns minutos (~430 páginas, respeitando o limite de taxa do Notion).",
+          "**Atenção**: as páginas são criadas uma por vez, com template; a criação de um ano completo (~430 páginas) leva cerca de 6 a 7 minutos e a requisição só responde no final. O servidor não tem timeout, mas o cliente também não pode ter (ex.: `curl` sem `--max-time` curto).",
         ].join("\n"),
         body: z
           .object({
@@ -99,6 +101,7 @@ export async function newYear(app: FastifyInstance) {
           400: errorResponse,
           404: errorResponse,
           409: errorResponse,
+          422: errorResponse,
           500: errorResponse,
         },
       },
@@ -143,6 +146,11 @@ export async function newYear(app: FastifyInstance) {
         if (error instanceof YearAlreadyExistsError) {
           return reply
             .status(409)
+            .send({ success: false, message: error.message });
+        }
+        if (error instanceof MissingTemplatesError) {
+          return reply
+            .status(422)
             .send({ success: false, message: error.message });
         }
         request.log.error(error);

@@ -14,7 +14,12 @@ import {
   ZodTypeProvider,
 } from "fastify-type-provider-zod";
 
-const app = fastify().withTypeProvider<ZodTypeProvider>();
+// O createYear/repair é uma única requisição longa (minutos): sem timeout de conexão
+// nem de requisição no servidor (já é o padrão do Fastify 5; explícito para não regredir).
+const app = fastify({
+  connectionTimeout: 0,
+  requestTimeout: 0,
+}).withTypeProvider<ZodTypeProvider>();
 
 app.setSerializerCompiler(serializerCompiler);
 app.setValidatorCompiler(validatorCompiler);
