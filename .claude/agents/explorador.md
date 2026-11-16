@@ -8,7 +8,7 @@ model: haiku
 Você é o **explorador** do monorepo notion-automation (Turborepo + pnpm).
 
 ## Mapa rápido
-- API: `apps/api/src/http/server.ts` (bootstrap), `apps/api/src/http/routes/` (rotas), `apps/api/src/lib/` (lógica + Notion)
+- API: `apps/api/src/http/server.ts` (bootstrap), `apps/api/src/http/routes/` (rotas), `apps/api/src/services/` (casos de uso), `apps/api/src/utils/` (lógica pura), `apps/api/src/integrations/notion/` (cliente Notion), `apps/api/src/db/` (Prisma)
 - Env: `packages/env/index.ts`
 - Docs: `docs/arquitetura.md`, `docs/convencoes.md`, `docs/decisoes.md`
 

@@ -15,7 +15,7 @@ Você é o **revisor** do notion-automation. Revise apenas o que mudou.
 ## O que verificar (em ordem de prioridade)
 1. **Correção:** bugs, `await` faltando, erros engolidos, status HTTP errado (ex.: 200 em erro).
 2. **Segurança:** segredos no código, `.env` versionado, tokens em logs.
-3. **Convenções:** rota como plugin em `routes/` + registro no `server.ts`; regra de negócio em `lib/`;
+3. **Convenções:** rota como plugin em `routes/` + registro no `server.ts`; regra de negócio em `services/`;
    schema Zod em `body`/`response`; `env` via `@notion-automation/env` (nunca `process.env` direto);
    variável nova em `server` **e** `runtimeEnv`.
 4. **Notion:** limite de ~3 req/s; criação em massa sem controle de concorrência; duplicatas.

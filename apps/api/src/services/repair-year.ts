@@ -1,6 +1,6 @@
 import { env } from "@notion-automation/env";
 import type { PageObjectResponse } from "@notionhq/client";
-import { notion } from "./notion";
+import { notion } from "@/integrations/notion/client";
 import {
   CONCURRENCY,
   dateProp,
@@ -14,8 +14,8 @@ import {
   title,
   titleProp,
   type PageProperties,
-} from "./notionHelpers";
-import { buildPlan, MONTH_NAMES } from "./routineCalendar";
+} from "@/integrations/notion/helpers";
+import { buildPlan, MONTH_NAMES } from "@/utils/routine-calendar";
 
 export class YearNotFoundError extends Error {
   constructor(year: number) {

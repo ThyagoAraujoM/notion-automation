@@ -1,6 +1,6 @@
 ---
 name: criar-endpoint
-description: Passo a passo para criar uma nova rota HTTP na API Fastify do notion-automation (plugin em routes/, lógica em lib/, schema Zod, registro no server.ts). Use quando o usuário pedir para criar/adicionar um endpoint, rota ou chamada nova da API.
+description: Passo a passo para criar uma nova rota HTTP na API Fastify do notion-automation (plugin em routes/, lógica em services/, schema Zod, registro no server.ts). Use quando o usuário pedir para criar/adicionar um endpoint, rota ou chamada nova da API.
 ---
 
 # Criar endpoint na API
@@ -12,12 +12,12 @@ Siga os passos em ordem. Convenções completas em `docs/convencoes.md`.
 - Qual nível do Notion é afetado (Ano/Trimestre/Mês/Semana/Dia) e qual variável `*_TOKEN`?
 - Se faltar algo essencial, pergunte antes de criar arquivos.
 
-## 2. Lógica em `apps/api/src/lib/`
+## 2. Lógica em `apps/api/src/services/`
 Crie a função de caso de uso. Ela **não conhece Fastify**: recebe dados tipados, devolve dados.
 
 ```ts
 import { env } from "@notion-automation/env";
-import { notion } from "./notion";
+import { notion } from "@/integrations/notion/client";
 
 export async function criarAlgo(input: { nome: string }) {
   return notion.pages.create({
@@ -29,7 +29,7 @@ export async function criarAlgo(input: { nome: string }) {
 
 ## 3. Rota em `apps/api/src/http/routes/<nome-kebab>.ts`
 ```ts
-import { criarAlgo } from "@/lib/criarAlgo";
+import { criarAlgo } from "@/services/criar-algo";
 import { FastifyInstance } from "fastify";
 import { ZodTypeProvider } from "fastify-type-provider-zod";
 import z from "zod";
@@ -76,7 +76,7 @@ Adicione em `server` **e** `runtimeEnv` de `packages/env/index.ts`. Avise o usu�
 - Atualize a tabela "Rotas existentes" em `docs/arquitetura.md`.
 
 ## Checklist final
-- [ ] Lógica em `lib/`, rota só com HTTP
+- [ ] Lógica em `services/`, rota só com HTTP
 - [ ] Schema Zod de entrada e de resposta
 - [ ] Erro devolve 4xx/5xx com `success: false`
 - [ ] Rota registrada no `server.ts`

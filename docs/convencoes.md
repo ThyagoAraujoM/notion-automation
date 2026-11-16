@@ -11,21 +11,21 @@
 
 ## Nomes
 
-| O quê                 | Padrão                                        | Exemplo                              |
-| --------------------- | --------------------------------------------- | ------------------------------------ |
-| Arquivo de rota       | kebab-case                                    | `routes/new-year.ts`                 |
-| Função plugin da rota | camelCase                                     | `export async function newYear(app)` |
-| Caminho HTTP          | _a definir_ (hoje: `/createYear`)             | —                                    |
-| Arquivo em `lib/`     | _a definir_ (hoje: camelCase `createYear.ts`) | —                                    |
-| Variável de ambiente  | SCREAMING_SNAKE_CASE                          | `PORT_BACKEND`                       |
+| O quê                                                    | Padrão                            | Exemplo                              |
+| -------------------------------------------------------- | --------------------------------- | ------------------------------------ |
+| Arquivo de rota                                          | kebab-case                        | `routes/new-year.ts`                 |
+| Função plugin da rota                                    | camelCase                         | `export async function newYear(app)` |
+| Caminho HTTP                                             | _a definir_ (hoje: `/createYear`) | —                                    |
+| Arquivo em `services/`, `utils/`, `db/`, `integrations/` | kebab-case                        | `services/create-year.ts`            |
+| Variável de ambiente                                     | SCREAMING_SNAKE_CASE              | `PORT_BACKEND`                       |
 
-> 💡 Decida um padrão para caminhos HTTP (ex.: REST `POST /years`) e para arquivos de `lib/`, e registre em [decisoes.md](./decisoes.md).
+> 💡 Decida um padrão para caminhos HTTP (ex.: REST `POST /years`) e registre em [decisoes.md](./decisoes.md).
 
 ## Rotas (Fastify)
 
 - Cada rota é um **plugin** em `src/http/routes/` e é registrada em `src/http/server.ts`.
 - Use `app.withTypeProvider<ZodTypeProvider>()` e declare `body`/`params`/`response` em `schema`.
-- Sem regra de negócio na rota: delegue para `src/lib/`.
+- Sem regra de negócio na rota: delegue para `src/services/`.
 - **Descrição das rotas no Swagger:** `description` é uma lista em markdown, um item por linha (`[...].join("\n")`), nunca um texto corrido. Padrão:
   - Seção `**Parâmetros**` com um item por parâmetro: ``- **`parametro`**: descrição do parâmetro.``
   - Seção `**Respostas**` com um item por status: ``- **`409`**: quando acontece.``
@@ -44,7 +44,7 @@
 
 - Conventional Commits em português: `feat:`, `fix:`, `chore:`, `docs:`, `refactor:`, `test:`.
 - Exemplo: `feat: cria trimestres ao gerar o ano`.
-- **Commit só no final de todas as etapas.** Uma feature/funcionalidade pode ter várias etapas (lib, rota, docs...);
+- **Commit só no final de todas as etapas.** Uma feature/funcionalidade pode ter várias etapas (service, rota, docs...);
   não se commita a cada etapa. Fluxo: implementar todas as etapas → `pnpm lint && pnpm check-types` → revisar → **um** commit.
   Só depois de concluir o pedido por inteiro começa-se o próximo (que terá seu próprio commit).
 - Se mudanças de pedidos/funcionalidades diferentes já estiverem misturadas, separe-as em commits distintos

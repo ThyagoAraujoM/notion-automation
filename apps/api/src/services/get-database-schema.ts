@@ -1,4 +1,4 @@
-import { notion } from "./notion";
+import { notion } from "@/integrations/notion/client";
 
 export async function getDatabaseSchema(databaseId: string) {
   const db = await notion.databases.retrieve({ database_id: databaseId });

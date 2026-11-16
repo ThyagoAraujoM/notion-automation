@@ -1,5 +1,5 @@
 import { env } from "@notion-automation/env";
-import { notion } from "./notion";
+import { notion } from "@/integrations/notion/client";
 import {
   CONCURRENCY,
   findYearPageId,
@@ -8,8 +8,8 @@ import {
   richText,
   title,
   type PageProperties,
-} from "./notionHelpers";
-import { buildPlan } from "./routineCalendar";
+} from "@/integrations/notion/helpers";
+import { buildPlan } from "@/utils/routine-calendar";
 
 export class YearAlreadyExistsError extends Error {
   constructor(year: number) {

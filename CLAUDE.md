@@ -39,7 +39,7 @@ Ainda não há testes.
 - **Nunca** leia, exiba ou commite o `.env`.
 - `process.env` só via `@notion-automation/env`; variável nova vai em `server` **e** `runtimeEnv` de `packages/env/index.ts`.
 - As variáveis `*_TOKEN` de período são **IDs de database** do Notion, não tokens.
-- Rota = plugin em `apps/api/src/http/routes/`, registrada em `server.ts`. Regra de negócio fica em `apps/api/src/lib/`. Para criar rota, use a skill `criar-endpoint`.
+- Rota = plugin em `apps/api/src/http/routes/`, registrada em `server.ts`. Regra de negócio fica em `apps/api/src/services/` (integrações em `integrations/`, banco em `db/`, lógica pura em `utils/`). Para criar rota, use a skill `criar-endpoint`.
 - Descrição de rota no Swagger: lista markdown, um parâmetro por linha (``- **`param`**: descrição``) + `.describe()` nos campos Zod. Padrão em [docs/convencoes.md](docs/convencoes.md#rotas-fastify).
 - Commits: Conventional Commits em português (`feat:`, `fix:`, `chore:`...).
 - **Commit só no final.** Não commite etapa por etapa: o commit vem **uma vez**, quando **todas as etapas** do pedido (a feature/funcionalidade) terminarem, com lint/tipos ok. Cada pedido concluído = um commit. Se pedidos diferentes ficarem misturados, separe-os em commits distintos (stage parcial). Push só quando pedido. Detalhes em [docs/convencoes.md](docs/convencoes.md#commits).

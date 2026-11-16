@@ -1,6 +1,6 @@
 import { env } from "@notion-automation/env";
 import type { PageObjectResponse } from "@notionhq/client";
-import { notion } from "./notion";
+import { notion } from "@/integrations/notion/client";
 
 export type PageProperties = NonNullable<
   Parameters<typeof notion.pages.create>[0]["properties"]

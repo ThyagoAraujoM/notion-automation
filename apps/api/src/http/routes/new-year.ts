@@ -1,7 +1,7 @@
-import { createYear, YearAlreadyExistsError } from "@/lib/createYear";
-import { repairYear, YearNotFoundError } from "@/lib/repairYear";
-import { InvalidStartTodayError } from "@/lib/routineCalendar";
-import { saveCreateYearLog } from "@/lib/saveLog";
+import { createYear, YearAlreadyExistsError } from "@/services/create-year";
+import { repairYear, YearNotFoundError } from "@/services/repair-year";
+import { InvalidStartTodayError } from "@/utils/routine-calendar";
+import { saveCreateYearLog } from "@/db/save-log";
 import { FastifyInstance } from "fastify";
 import { ZodTypeProvider } from "fastify-type-provider-zod";
 import z from "zod";

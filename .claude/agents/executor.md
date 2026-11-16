@@ -1,6 +1,6 @@
 ---
 name: executor
-description: Implementa tarefas bem definidas no notion-automation (criar rota, ajustar lib, corrigir bug já diagnosticado). Use quando o plano já está claro e falta escrever o código. Segue docs/convencoes.md e roda lint/check-types ao final.
+description: Implementa tarefas bem definidas no notion-automation (criar rota, ajustar service, corrigir bug já diagnosticado). Use quando o plano já está claro e falta escrever o código. Segue docs/convencoes.md e roda lint/check-types ao final.
 tools: Read, Grep, Glob, Edit, Write, Bash
 model: sonnet
 ---

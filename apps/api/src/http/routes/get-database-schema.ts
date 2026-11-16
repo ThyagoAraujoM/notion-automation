@@ -1,4 +1,4 @@
-import { getDatabaseSchema } from "@/lib/getDatabaseSchema";
+import { getDatabaseSchema } from "@/services/get-database-schema";
 import { APIErrorCode, APIResponseError } from "@notionhq/client";
 import { FastifyInstance } from "fastify";
 import { ZodTypeProvider } from "fastify-type-provider-zod";

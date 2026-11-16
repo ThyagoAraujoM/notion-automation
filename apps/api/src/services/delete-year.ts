@@ -1,13 +1,13 @@
 import { env } from "@notion-automation/env";
 import type { PageObjectResponse } from "@notionhq/client";
-import { notion } from "./notion";
+import { notion } from "@/integrations/notion/client";
 import {
   CONCURRENCY,
   findYearPageId,
   mapPool,
   queryAll,
-} from "./notionHelpers";
-import { YearNotFoundError } from "./repairYear";
+} from "@/integrations/notion/helpers";
+import { YearNotFoundError } from "./repair-year";
 
 export type DeleteYearResult = {
   year: number;

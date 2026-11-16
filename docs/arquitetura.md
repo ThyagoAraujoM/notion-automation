@@ -29,12 +29,15 @@ Cada nível vive em um **database próprio do Notion**. As variáveis `*_TOKEN` 
 ## Fluxo de uma requisição (API)
 
 ```
-HTTP ─▶ src/http/server.ts ─▶ src/http/routes/<rota>.ts ─▶ src/lib/<caso-de-uso>.ts ─▶ src/lib/notion.ts ─▶ Notion API
+HTTP ─▶ src/http/server.ts ─▶ src/http/routes/<rota>.ts ─▶ src/services/<caso-de-uso>.ts ─▶ src/integrations/notion/client.ts ─▶ Notion API
           (registra plugins)    (valida com Zod, responde)    (regra de negócio)          (cliente singleton)
 ```
 
 - **Rotas** (`src/http/routes/`): só HTTP — schema Zod, status code, formato da resposta.
-- **lib** (`src/lib/`): regra de negócio e chamadas ao Notion. Não conhece Fastify.
+- **services** (`src/services/`): casos de uso (regra de negócio). Não conhece Fastify.
+- **utils** (`src/utils/`): lógica pura, sem I/O (ex.: calendário).
+- **integrations** (`src/integrations/notion/`): cliente e helpers do Notion.
+- **db** (`src/db/`): client Prisma e gravação de logs.
 - **env** (`@notion-automation/env`): única porta de entrada para `process.env`.
 
 ## Portas
@@ -60,7 +63,7 @@ Ambos carregam o `.env` da raiz via `dotenv -e ../../.env`.
 
 ## Rotina anual (`POST /createYear`)
 
-Body opcional `{ "year": 2027, "startToday": 0, "repair": 0 }` (sem `year` → ano atual). Código: `routes/new-year.ts` → `lib/createYear.ts` / `lib/repairYear.ts` → `lib/routineCalendar.ts` (calendário puro) e `lib/notionHelpers.ts` (consultas e propriedades).
+Body opcional `{ "year": 2027, "startToday": 0, "repair": 0 }` (sem `year` → ano atual). Código: `routes/new-year.ts` → `services/create-year.ts` / `services/repair-year.ts` → `utils/routine-calendar.ts` (calendário puro) e `integrations/notion/helpers.ts` (consultas e propriedades).
 
 Fluxo: (1) resolve o ano → (2) consulta o database de anos pelo `Name`; se existir, **409** →
 (3) `buildYearPlan` calcula trimestres/meses/semanas/dias → (4–8) cria Ano → Trimestres → Meses → Semanas → Dias,
@@ -80,7 +83,7 @@ os meses e trimestres de hoje em diante. Só vale para o **ano atual** (outro an
 começou no mês anterior liga ao primeiro mês criado; no `repair`, essa semana não é religada (o mês correto está fora do escopo).
 Se o ano já existir (sem `repair`), continua 409.
 
-**`repair` (`1` ou `0`, padrão `0`):** com `1`, em vez de criar, **repara** o ano informado (`lib/repairYear.ts`).
+**`repair` (`1` ou `0`, padrão `0`):** com `1`, em vez de criar, **repara** o ano informado (`services/repair-year.ts`).
 O ano precisa existir (senão **404**). Fluxo: busca os trimestres ligados ao ano → os meses ligados a eles → as semanas
 ligadas aos meses; os **dias** são buscados pela propriedade `Data` (dentro do ano). Cada item do calendário é casado por
 número (`Número do Trimestre`, `Nº do mês`, `Semana nº`) ou data, com fallback no nome. O que falta é **criado e vinculado**;
@@ -102,7 +105,7 @@ Regras do calendário:
 - Postgres 17 local via Docker (`docker-compose.yml` na raiz): `pnpm db:up` / `pnpm db:down` / `pnpm db:logs`.
 - Variáveis no `.env` da raiz: `DATABASE_URL` (ex.: `postgresql://notion:notion@localhost:5432/notion_automation`) e, opcionalmente, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `POSTGRES_PORT` (padrões: `notion` / `notion` / `notion_automation` / `5432`).
 - Prisma 7 em `apps/api/prisma/` (`schema.prisma`, `migrations/`) com `prisma.config.ts` e driver adapter `pg`. O client é gerado em `apps/api/src/generated/prisma` (ignorado no git; `pnpm --filter=@notion-automation/api db:generate`, também roda no `postinstall`).
-- Client único em `apps/api/src/lib/prisma.ts`; a conexão fecha no hook `onClose` do `server.ts`.
+- Client único em `apps/api/src/db/prisma.ts`; a conexão fecha no hook `onClose` do `server.ts`.
 - Comandos (em `apps/api`): `db:migrate` (cria/aplica migration em dev), `db:deploy`, `db:studio`.
 - Tabelas (uma migration cada), ambas com `id`, `response` (JSON) e `created_at`:
   - `log_create_year`: resposta de sucesso (201 e 200 do `repair`) de `POST /createYear`.

@@ -2,7 +2,7 @@ import { env } from "@notion-automation/env";
 import fastify, { type FastifyError } from "fastify";
 import fastifySwagger from "@fastify/swagger";
 import fastifySwaggerUi from "@fastify/swagger-ui";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/db/prisma";
 import { newYear } from "./routes/new-year";
 import { deleteYearRoute } from "./routes/delete-year";
 import { getDatabaseSchemaRoute } from "./routes/get-database-schema";
