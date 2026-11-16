@@ -53,7 +53,7 @@
 
 - **Data:** 2026-11-15
 - **Status:** aceita
-- **Contexto:** `DATABASE_URL` existia sem uso; queremos registrar o retorno das rotas de criar e apagar ano.
+- **Contexto:** `DATABASE_URL` existia sem uso (substituída por `POSTGRES_USER/PASSWORD/DB/PORT` separadas); queremos registrar o retorno das rotas de criar e apagar ano.
 - **Decisão:** Postgres 17 em Docker (só o banco; a API segue com `pnpm dev`), Prisma 7 com driver adapter `pg` e uma tabela de log por rota.
 - **Alternativas:** rodar a API também no Docker (descartado por ora).
 - **Consequências:** é preciso subir o banco (`pnpm db:up`) antes da API. A CLI `prisma` está fixa em `7.10.1` (o tag `latest` já aponta para a 8 rc).

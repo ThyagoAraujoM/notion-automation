@@ -53,4 +53,4 @@ Ainda não há testes.
 ## Pontos de atenção conhecidos
 
 - `apps/api/package.json`: `main` aponta para `server.tsx`, mas o arquivo é `server.ts`.
-- A API precisa do Postgres no ar (`pnpm db:up`) e de `DATABASE_URL` no `.env`; as rotas createYear/deleteYear gravam log no banco.
+- A API precisa do Postgres no ar (`pnpm db:up`) e das variáveis `POSTGRES_*` no `.env`; as rotas createYear/deleteYear gravam log no banco.

@@ -103,7 +103,7 @@ Regras do calendário:
 ## Banco de dados (PostgreSQL + Prisma)
 
 - Postgres 17 local via Docker (`docker-compose.yml` na raiz): `pnpm db:up` / `pnpm db:down` / `pnpm db:logs`.
-- Variáveis no `.env` da raiz: `DATABASE_URL` (ex.: `postgresql://notion:notion@localhost:5432/notion_automation`) e, opcionalmente, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `POSTGRES_PORT` (padrões: `notion` / `notion` / `notion_automation` / `5432`).
+- Variáveis no `.env` da raiz, separadas (sem `DATABASE_URL`): `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` e `POSTGRES_PORT` (padrão `5432`). O docker-compose e a API usam as mesmas; a URL do Prisma CLI é montada em `prisma.config.ts`.
 - Prisma 7 em `apps/api/prisma/` (`schema.prisma`, `migrations/`) com `prisma.config.ts` e driver adapter `pg`. O client é gerado em `apps/api/src/generated/prisma` (ignorado no git; `pnpm --filter=@notion-automation/api db:generate`, também roda no `postinstall`).
 - Client único em `apps/api/src/db/prisma.ts`; a conexão fecha no hook `onClose` do `server.ts`.
 - Comandos (em `apps/api`): `db:migrate` (cria/aplica migration em dev), `db:deploy`, `db:studio`.
