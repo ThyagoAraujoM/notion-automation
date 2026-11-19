@@ -15,3 +15,12 @@ export class YearNotFoundError extends Error {
     this.name = "YearNotFoundError";
   }
 }
+
+export class OperationInProgressError extends Error {
+  constructor(year: number, heldBy: string) {
+    super(
+      `Já existe uma operação (${heldBy}) em andamento para o ano ${year}. Aguarde ela terminar antes de enviar outro pedido.`,
+    );
+    this.name = "OperationInProgressError";
+  }
+}

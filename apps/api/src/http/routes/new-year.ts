@@ -1,9 +1,11 @@
 import { createYear } from "@/services/create-year";
 import { repairYear } from "@/services/repair-year";
 import {
+  OperationInProgressError,
   YearAlreadyExistsError,
   YearNotFoundError,
 } from "@/services/shared/errors";
+import { withYearLock } from "@/services/shared/year-lock";
 import { MissingTemplatesError } from "@/integrations/notion/helpers";
 import { InvalidStartTodayError } from "@/utils/routine-calendar";
 import { saveCreateYearLog } from "@/db/save-log";
@@ -37,7 +39,7 @@ export async function newYear(app: FastifyInstance) {
           "- **`200`**: ano reparado (`repair: 1`), com a contagem de páginas criadas e religadas.",
           "- **`400`**: `startToday` usado com um ano que não é o atual.",
           "- **`404`**: `repair: 1` com um ano que não existe.",
-          "- **`409`**: o ano já existe (sem `repair`).",
+          "- **`409`**: o ano já existe (sem `repair`) ou já há outra operação (criar, reparar ou apagar) em andamento para esse ano.",
           "- **`422`**: faltam templates no Notion (a resposta lista os nomes); nada é criado (vale também para `repair`).",
           "",
           "**Atenção**: as páginas são criadas uma por vez, com template; a criação de um ano completo (~430 páginas) leva cerca de 6 a 7 minutos e a requisição só responde no final. O servidor não tem timeout, mas o cliente também não pode ter (ex.: `curl` sem `--max-time` curto).",
@@ -118,7 +120,9 @@ export async function newYear(app: FastifyInstance) {
 
       try {
         if (repair) {
-          const result = await repairYear(year, startToday);
+          const result = await withYearLock(year, "repairYear", () =>
+            repairYear(year, startToday),
+          );
           const body = {
             success: true,
             message: `Rotina de ${year}${scope} conferida e reparada com sucesso.`,
@@ -128,7 +132,9 @@ export async function newYear(app: FastifyInstance) {
           return reply.status(200).send(body);
         }
 
-        const result = await createYear(year, startToday);
+        const result = await withYearLock(year, "createYear", () =>
+          createYear(year, startToday),
+        );
         const body = {
           success: true,
           message: `Rotina de ${year}${scope} criada com sucesso.`,
@@ -147,7 +153,10 @@ export async function newYear(app: FastifyInstance) {
             .status(404)
             .send({ success: false, message: error.message });
         }
-        if (error instanceof YearAlreadyExistsError) {
+        if (
+          error instanceof YearAlreadyExistsError ||
+          error instanceof OperationInProgressError
+        ) {
           return reply
             .status(409)
             .send({ success: false, message: error.message });

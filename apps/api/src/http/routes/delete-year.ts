@@ -1,5 +1,9 @@
 import { deleteYear } from "@/services/delete-year";
-import { YearNotFoundError } from "@/services/shared/errors";
+import {
+  OperationInProgressError,
+  YearNotFoundError,
+} from "@/services/shared/errors";
+import { withYearLock } from "@/services/shared/year-lock";
 import { saveDeletedYearLog } from "@/db/save-log";
 import { FastifyInstance } from "fastify";
 import { ZodTypeProvider } from "fastify-type-provider-zod";
@@ -28,6 +32,7 @@ export async function deleteYearRoute(app: FastifyInstance) {
           "- **`200`**: ano apagado, com a contagem de páginas removidas por nível.",
           "- **`400`**: `year` ausente ou inválido.",
           "- **`404`**: o ano não existe no database de anos.",
+          "- **`409`**: já existe outra operação (criar, reparar ou apagar) em andamento para esse ano.",
           "",
           "**Atenção**: as páginas vão para a **lixeira** do Notion (recuperável por ~30 dias), não são excluídas de forma permanente. A operação leva alguns minutos (~430 páginas, respeitando o limite de taxa do Notion).",
         ].join("\n"),
@@ -54,6 +59,7 @@ export async function deleteYearRoute(app: FastifyInstance) {
           }),
           400: errorResponse,
           404: errorResponse,
+          409: errorResponse,
           500: errorResponse,
         },
       },
@@ -62,7 +68,9 @@ export async function deleteYearRoute(app: FastifyInstance) {
       const { year } = request.query;
 
       try {
-        const result = await deleteYear(year);
+        const result = await withYearLock(year, "deleteYear", () =>
+          deleteYear(year),
+        );
         const body = {
           success: true,
           message: `Rotina de ${year} enviada para a lixeira do Notion.`,
@@ -74,6 +82,11 @@ export async function deleteYearRoute(app: FastifyInstance) {
         if (error instanceof YearNotFoundError) {
           return reply
             .status(404)
+            .send({ success: false, message: error.message });
+        }
+        if (error instanceof OperationInProgressError) {
+          return reply
+            .status(409)
             .send({ success: false, message: error.message });
         }
         request.log.error(error);

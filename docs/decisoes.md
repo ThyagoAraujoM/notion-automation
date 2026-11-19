@@ -67,6 +67,15 @@
 - **Alternativas:** IDs de template em variáveis de ambiente (descartado: ~76 IDs); cache em banco (descartado: desatualiza e é pouco chamado). Criar com 3 simultâneas (descartado: em teste, template + relação em paralelo mandou 3 de 28 dias para a lixeira, sem erro; sem template ou sequencial, 0 perdas — e a ordem dos filhos na relação do pai também embaralhava).
 - **Consequências:** ~430 páginas levam ~6–7 min numa única requisição HTTP (sem timeout no servidor). Renomear um template no Notion passa a dar 422. A perda silenciosa de páginas foi contornada, não explicada pelo Notion; nada detecta se voltar. Validado à mão em nov–dez/2026 (57 páginas, 0 perdidas, ordem correta) e criando um ano pela API; o `repair` com template foi validado ao vivo pelo teste E2E (`test:e2e`, nov/2026: createYear out–dez → repair set–dez → deleteYear em 2090, 0 páginas perdidas). A detecção de página perdida agora existe só nesse teste, não em produção.
 
+## 007 — Trava por ano no Postgres contra operações simultâneas
+
+- **Data:** 2026-11-19
+- **Status:** aceita
+- **Contexto:** `createYear`/`repair`/`deleteYear` levam minutos e não havia proteção: duas chamadas do mesmo ano ao mesmo tempo podiam duplicar páginas ou apagar o ano durante a criação.
+- **Decisão:** tabela `year_operation_lock` com `year` como chave primária; a operação insere a linha ao começar e remove ao terminar. Segunda tentativa → **409**. Trava presa é limpa ao subir a API e por TTL de 1 h.
+- **Alternativas:** tabela de operações com `status` e índice único parcial (`WHERE status = 'running'`): descartada por exigir SQL manual fora do schema do Prisma e dar mais histórico do que se usa hoje (os logs de sucesso já existem). Lock em memória: não sobrevive a reinício e não vale com mais de uma instância.
+- **Consequências:** a API passa a depender do Postgres também para executar (não só para logar). A trava é por ano e vale entre os 3 tipos de operação. Se um dia houver status consultável (rota 202 + polling), a tabela cresce para um registro de operações.
+
 ## Pendentes
 
 - [ ] Padrão de nomes para rotas HTTP

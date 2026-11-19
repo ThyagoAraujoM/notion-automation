@@ -3,6 +3,7 @@ import fastify, { type FastifyError } from "fastify";
 import fastifySwagger from "@fastify/swagger";
 import fastifySwaggerUi from "@fastify/swagger-ui";
 import { prisma } from "@/db/prisma";
+import { clearYearLocks } from "@/db/year-lock";
 import { newYear } from "./routes/new-year";
 import { deleteYearRoute } from "./routes/delete-year";
 import { getDatabaseSchemaRoute } from "./routes/get-database-schema";
@@ -89,6 +90,12 @@ app.addHook("onClose", async () => {
   await prisma.$disconnect();
 });
 
-app.listen({ port: env.PORT_BACKEND }, () => {
-  console.log(`Server started in PORT ${env.PORT_BACKEND}`);
-});
+// Travas que sobraram no banco são de uma execução anterior que caiu (só há uma instância
+// da API), então são limpas antes de aceitar requisições.
+clearYearLocks()
+  .catch((error) => app.log.error(error, "Falha ao limpar as travas de ano"))
+  .finally(() => {
+    app.listen({ port: env.PORT_BACKEND }, () => {
+      console.log(`Server started in PORT ${env.PORT_BACKEND}`);
+    });
+  });

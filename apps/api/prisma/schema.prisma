@@ -25,3 +25,13 @@ model LogDeletedYear {
 
   @@map("log_deleted_year")
 }
+
+/// Trava por ano: existe uma linha enquanto uma operação (createYear, repairYear ou deleteYear)
+/// daquele ano está em andamento. A chave primária garante que só uma operação por ano rode.
+model YearOperationLock {
+  year      Int      @id
+  operation String
+  startedAt DateTime @default(now()) @map("started_at")
+
+  @@map("year_operation_lock")
+}

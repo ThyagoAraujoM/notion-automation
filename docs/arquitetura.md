@@ -119,7 +119,17 @@ Regras do calendário:
 - Tabelas (uma migration cada), ambas com `id`, `response` (JSON) e `created_at`:
   - `log_create_year`: resposta de sucesso (201 e 200 do `repair`) de `POST /createYear`.
   - `log_deleted_year`: resposta de sucesso de `DELETE /deleteYear`.
+  - `year_operation_lock`: **trava por ano** (`year` é a chave primária, `operation`, `started_at`). Ver abaixo.
 - A gravação do log acontece depois da operação no Notion; se o insert falhar, o erro só é logado e a resposta da rota não muda.
+
+### Trava de operação por ano
+
+`createYear`, `repairYear` e `deleteYear` rodam dentro de `withYearLock(year, operation, fn)` (`services/shared/year-lock.ts`, usado pelas rotas). Ele insere o ano em `year_operation_lock` antes de começar e remove no fim (`finally`). Se já houver uma linha para aquele ano, a operação **não executa** e a rota responde **409** ("já existe uma operação em andamento"). Anos diferentes rodam em paralelo.
+
+- A chave primária faz o próprio banco recusar a segunda tentativa, sem corrida entre "checar" e "gravar".
+- Trava presa (processo morreu no meio): ao subir, a API limpa todas as travas (`clearYearLocks`, só há uma instância); além disso, uma trava com mais de 1 h (`YEAR_LOCK_TTL_MS`) é descartada ao tentar travar.
+- Só as rotas travam; o script E2E chama os services direto e por isso não precisa do Postgres.
+- Se o Postgres estiver fora, travar falha e a rota responde 500 (antes, só o log falhava).
 
 ## A preencher
 
