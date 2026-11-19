@@ -30,9 +30,10 @@ pnpm lint && pnpm check-types               # rode antes de dar uma tarefa por c
 pnpm format
 pnpm db:up                                  # sobe o Postgres (Docker); db:down / db:logs
 pnpm --filter=@notion-automation/api db:migrate   # nova migration em dev
+pnpm --filter=@notion-automation/api test:e2e     # createYear → repair → deleteYear num ano avulso (2090), ~5 min, no Notion real
 ```
 
-Ainda não há testes.
+Testes: há um teste E2E no Notion real (`pnpm --filter=@notion-automation/api test:e2e`, ver [docs/convencoes.md](docs/convencoes.md#testes)); ainda não há testes unitários.
 
 ## Regras essenciais
 

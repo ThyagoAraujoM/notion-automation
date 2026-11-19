@@ -14,7 +14,7 @@ import {
   type PageProperties,
   type TemplateLevel,
 } from "@/integrations/notion/helpers";
-import { buildPlan } from "@/utils/routine-calendar";
+import { buildPlan, type PlanFrom } from "@/utils/routine-calendar";
 
 export class YearAlreadyExistsError extends Error {
   constructor(year: number) {
@@ -37,9 +37,9 @@ export type CreateYearResult = {
 
 export async function createYear(
   year: number,
-  startToday = false,
+  from: PlanFrom = false,
 ): Promise<CreateYearResult> {
-  const plan = buildPlan(year, startToday);
+  const plan = buildPlan(year, from);
 
   if (await findYearPageId(plan.name)) {
     throw new YearAlreadyExistsError(year);

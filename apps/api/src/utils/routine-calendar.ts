@@ -144,12 +144,35 @@ export function trimPlanFrom(plan: YearPlan, fromDate: string): YearPlan {
   };
 }
 
-/** Plano do ano; com `startToday`, só de hoje em diante (e apenas para o ano atual). */
-export function buildPlan(year: number, startToday: boolean): YearPlan {
+/**
+ * Recorte do plano: `false` = ano inteiro; `true` = de hoje em diante (só no ano atual);
+ * `"YYYY-MM-DD"` = a partir dessa data do ano (uso interno, ex.: teste E2E; não exposto na rota).
+ */
+export type PlanFrom = boolean | string;
+
+export class InvalidFromDateError extends Error {
+  constructor(year: number, from: string) {
+    super(
+      `A data inicial "${from}" não pertence ao ano ${year} (use YYYY-MM-DD).`,
+    );
+    this.name = "InvalidFromDateError";
+  }
+}
+
+/** Plano do ano, inteiro ou recortado a partir de uma data (ver `PlanFrom`). */
+export function buildPlan(year: number, from: PlanFrom = false): YearPlan {
   const plan = buildYearPlan(year);
-  if (!startToday) return plan;
-  if (year !== new Date().getFullYear()) throw new InvalidStartTodayError(year);
-  return trimPlanFrom(plan, todayIso());
+  if (from === false) return plan;
+  if (from === true) {
+    if (year !== new Date().getFullYear()) {
+      throw new InvalidStartTodayError(year);
+    }
+    return trimPlanFrom(plan, todayIso());
+  }
+  if (!plan.days.some((d) => d.date === from)) {
+    throw new InvalidFromDateError(year, from);
+  }
+  return trimPlanFrom(plan, from);
 }
 
 export function buildYearPlan(year: number): YearPlan {

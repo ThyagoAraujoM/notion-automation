@@ -54,4 +54,13 @@
 
 ## Testes
 
-_Ainda não configurados._ Quando forem, registre aqui: framework, onde ficam os arquivos, como mockar o Notion.
+### E2E no Notion real
+
+`pnpm --filter=@notion-automation/api test:e2e [-- --year=2090] [--keep]` (código em `apps/api/src/scripts/e2e-routine.ts`).
+
+- Roda `createYear` (out–dez) → `repair` (set–dez, precisa criar Setembro e o T3) → `deleteYear` num ano avulso (padrão **2090**) e confere o Notion lendo-o de volta (nomes, números, pais, contagens). Cada etapa imprime trimestre → mês → semanas → dias.
+- Chama os **services** direto: não precisa da API no ar nem do Postgres. O recorte "a partir de uma data" usa a opção interna `from` dos services (`PlanFrom`), que a rota não expõe.
+- Escreve no workspace **real** (e apaga no fim). Por segurança só aceita anos `>= ano atual + 10`, aborta se o ano já existir e só apaga o que ele criou. `--keep` deixa o ano no Notion para depuração.
+- Sai com código 1 se algo falhar. Rode depois de mexer em `services/`, `integrations/notion/` ou `utils/routine-calendar.ts`.
+
+Testes unitários (Vitest) ainda não configurados; quando forem, registre aqui: framework, onde ficam os arquivos, como mockar o Notion.

@@ -20,7 +20,11 @@ import {
   type PageTemplate,
   type TemplateLevel,
 } from "@/integrations/notion/helpers";
-import { buildPlan, MONTH_NAMES } from "@/utils/routine-calendar";
+import {
+  buildPlan,
+  MONTH_NAMES,
+  type PlanFrom,
+} from "@/utils/routine-calendar";
 
 export class YearNotFoundError extends Error {
   constructor(year: number) {
@@ -74,9 +78,9 @@ const matchNumber = (text: string, regex: RegExp) => {
  */
 export async function repairYear(
   year: number,
-  startToday = false,
+  from: PlanFrom = false,
 ): Promise<RepairYearResult> {
-  const plan = buildPlan(year, startToday);
+  const plan = buildPlan(year, from);
 
   const yearId = await findYearPageId(plan.name);
   if (!yearId) throw new YearNotFoundError(year);
