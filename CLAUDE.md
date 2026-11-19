@@ -53,5 +53,4 @@ Testes: há um teste E2E no Notion real (`pnpm --filter=@notion-automation/api t
 
 ## Pontos de atenção conhecidos
 
-- `apps/api/package.json`: `main` aponta para `server.tsx`, mas o arquivo é `server.ts`.
-- A API precisa do Postgres no ar (`pnpm db:up`) e das variáveis `POSTGRES_*` no `.env`; as rotas createYear/deleteYear gravam log no banco.
+- A API precisa do Postgres no ar (`pnpm db:up`) e das variáveis `POSTGRES_*` no `.env`; as rotas createYear/deleteYear gravam log no banco e usam uma trava por ano (`year_operation_lock`); rode `pnpm --filter=@notion-automation/api db:deploy` para aplicar as migrations.

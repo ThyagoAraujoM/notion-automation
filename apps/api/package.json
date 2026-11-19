@@ -2,7 +2,6 @@
   "name": "@notion-automation/api",
   "version": "1.0.0",
   "description": "Api to make automation for notion",
-  "main": "./src/http/server.tsx",
   "scripts": {
     "env:load": "dotenv -e ../../.env --",
     "dev": "pnpm env:load tsx watch ./src/http/server.ts",
