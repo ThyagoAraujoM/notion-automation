@@ -1,5 +1,9 @@
-import { createYear, YearAlreadyExistsError } from "@/services/create-year";
-import { repairYear, YearNotFoundError } from "@/services/repair-year";
+import { createYear } from "@/services/create-year";
+import { repairYear } from "@/services/repair-year";
+import {
+  YearAlreadyExistsError,
+  YearNotFoundError,
+} from "@/services/shared/errors";
 import { MissingTemplatesError } from "@/integrations/notion/helpers";
 import { InvalidStartTodayError } from "@/utils/routine-calendar";
 import { saveCreateYearLog } from "@/db/save-log";

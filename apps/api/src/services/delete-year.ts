@@ -1,13 +1,7 @@
-import { env } from "@notion-automation/env";
-import type { PageObjectResponse } from "@notionhq/client";
-import { notion } from "@/integrations/notion/client";
-import {
-  CONCURRENCY,
-  findYearPageId,
-  mapPool,
-  queryAll,
-} from "@/integrations/notion/helpers";
-import { YearNotFoundError } from "./repair-year";
+import { findYearPageId } from "@/integrations/notion/helpers";
+import { YearNotFoundError } from "./shared/errors";
+import { collectYearHierarchy } from "./shared/year-hierarchy";
+import { trashPages } from "./shared/year-pages";
 
 export type DeleteYearResult = {
   year: number;
@@ -21,10 +15,6 @@ export type DeleteYearResult = {
   };
 };
 
-const uniqueById = (pages: PageObjectResponse[]) => [
-  ...new Map(pages.map((p) => [p.id, p])).values(),
-];
-
 /**
  * Envia para a lixeira do Notion (recuperável) o ano e tudo que desce dele:
  * trimestres → meses → semanas → dias. Primeiro coleta toda a hierarquia e só então
@@ -35,51 +25,14 @@ export async function deleteYear(year: number): Promise<DeleteYearResult> {
   const yearId = await findYearPageId(String(year));
   if (!yearId) throw new YearNotFoundError(year);
 
-  const quarters = await queryAll(env.QUARTERLY_TOKEN, {
-    property: "Anos",
-    relation: { contains: yearId },
-  });
-  const months = uniqueById(
-    (
-      await mapPool(quarters, CONCURRENCY, (q) =>
-        queryAll(env.MONTHLY_TOKEN, {
-          property: "Trimestres",
-          relation: { contains: q.id },
-        }),
-      )
-    ).flat(),
-  );
-  const weeks = uniqueById(
-    (
-      await mapPool(months, CONCURRENCY, (m) =>
-        queryAll(env.WEEKLY_TOKEN, {
-          property: "Meses",
-          relation: { contains: m.id },
-        }),
-      )
-    ).flat(),
-  );
-  const days = uniqueById(
-    (
-      await mapPool(weeks, CONCURRENCY, (w) =>
-        queryAll(env.DAILY_TOKEN, {
-          property: "Semana",
-          relation: { contains: w.id },
-        }),
-      )
-    ).flat(),
-  );
+  const { quarters, months, weeks, days } = await collectYearHierarchy(yearId);
 
-  const trash = (pages: { id: string }[]) =>
-    mapPool(pages, CONCURRENCY, (p) =>
-      notion.pages.update({ page_id: p.id, in_trash: true }),
-    );
-
-  await trash(days);
-  await trash(weeks);
-  await trash(months);
-  await trash(quarters);
-  await trash([{ id: yearId }]);
+  const ids = (pages: { id: string }[]) => pages.map((p) => p.id);
+  await trashPages(ids(days));
+  await trashPages(ids(weeks));
+  await trashPages(ids(months));
+  await trashPages(ids(quarters));
+  await trashPages([yearId]);
 
   return {
     year,

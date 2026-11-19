@@ -1,5 +1,5 @@
 import { deleteYear } from "@/services/delete-year";
-import { YearNotFoundError } from "@/services/repair-year";
+import { YearNotFoundError } from "@/services/shared/errors";
 import { saveDeletedYearLog } from "@/db/save-log";
 import { FastifyInstance } from "fastify";
 import { ZodTypeProvider } from "fastify-type-provider-zod";

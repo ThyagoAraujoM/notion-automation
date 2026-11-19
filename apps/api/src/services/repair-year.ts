@@ -2,38 +2,31 @@ import { env } from "@notion-automation/env";
 import type { PageObjectResponse } from "@notionhq/client";
 import { notion } from "@/integrations/notion/client";
 import {
-  CONCURRENCY,
   dateProp,
   findYearPageId,
-  loadTemplates,
-  mapPool,
   mapSequential,
   numberProp,
   queryAll,
   relation,
   relationIds,
-  richText,
-  title,
-  templateById,
   titleProp,
-  type PageProperties,
-  type PageTemplate,
-  type TemplateLevel,
 } from "@/integrations/notion/helpers";
+import { indexBy, matchNumber, normId } from "@/utils/notion-pages";
 import {
   buildPlan,
   MONTH_NAMES,
   type PlanFrom,
 } from "@/utils/routine-calendar";
-
-export class YearNotFoundError extends Error {
-  constructor(year: number) {
-    super(
-      `O ano ${year} não existe no database de anos. Crie-o antes (sem repair).`,
-    );
-    this.name = "YearNotFoundError";
-  }
-}
+import { YearNotFoundError } from "./shared/errors";
+import { queryChildrenOf } from "./shared/year-hierarchy";
+import {
+  createPage,
+  dayProps,
+  monthProps,
+  prepareTemplates,
+  quarterProps,
+  weekProps,
+} from "./shared/year-pages";
 
 export type RepairYearResult = {
   year: number;
@@ -42,30 +35,6 @@ export type RepairYearResult = {
   created: { quarters: number; months: number; weeks: number; days: number };
   /** Páginas que existiam mas estavam ligadas ao pai errado e foram religadas */
   relinked: { months: number; weeks: number; days: number };
-};
-
-const normId = (id: string) => id.replace(/-/g, "");
-
-const uniqueById = (pages: PageObjectResponse[]) => [
-  ...new Map(pages.map((p) => [p.id, p])).values(),
-];
-
-/** Indexa as páginas por chave; se houver duplicatas, a primeira vence. */
-function indexBy<K>(
-  pages: PageObjectResponse[],
-  key: (page: PageObjectResponse) => K | null,
-) {
-  const map = new Map<K, PageObjectResponse>();
-  for (const page of pages) {
-    const k = key(page);
-    if (k !== null && !map.has(k)) map.set(k, page);
-  }
-  return map;
-}
-
-const matchNumber = (text: string, regex: RegExp) => {
-  const m = regex.exec(text.trim());
-  return m ? Number(m[1]) : null;
 };
 
 /**
@@ -86,30 +55,10 @@ export async function repairYear(
   if (!yearId) throw new YearNotFoundError(year);
 
   // Valida os templates antes de criar qualquer página (mesma regra do createYear)
-  const templates = await loadTemplates({
-    quarter: plan.quarters.map((q) => q.name),
-    month: plan.months.map((m) => m.name),
-    week: plan.weeks.map((w) => w.name),
-    day: plan.days.map((d) => d.name),
-  });
-  const tpl = (level: TemplateLevel, name: string) =>
-    templateById(templates, level, name);
+  const tpl = await prepareTemplates(plan);
 
   const created = { quarters: 0, months: 0, weeks: 0, days: 0 };
   const relinked = { months: 0, weeks: 0, days: 0 };
-
-  const createPage = async (
-    databaseId: string,
-    properties: PageProperties,
-    template: PageTemplate,
-  ) =>
-    (
-      await notion.pages.create({
-        parent: { database_id: databaseId },
-        properties,
-        template,
-      })
-    ).id;
 
   /** Garante que a página `found` aponte só para `parentId` em `property`. */
   const ensureParent = async (
@@ -144,25 +93,16 @@ export async function repairYear(
     created.quarters++;
     return createPage(
       env.QUARTERLY_TOKEN,
-      {
-        Name: title(q.name),
-        "Número do Trimestre": { number: q.number },
-        Anos: relation(yearId),
-      },
+      quarterProps(q, yearId),
       tpl("quarter", q.name),
     );
   });
 
   // Meses: tudo que está sob os trimestres do ano
-  const monthPages = uniqueById(
-    (
-      await mapPool(quarterPages, CONCURRENCY, (qp) =>
-        queryAll(env.MONTHLY_TOKEN, {
-          property: "Trimestres",
-          relation: { contains: qp.id },
-        }),
-      )
-    ).flat(),
+  const monthPages = await queryChildrenOf(
+    env.MONTHLY_TOKEN,
+    "Trimestres",
+    quarterPages,
   );
   const monthByNumber = indexBy(monthPages, (p) => {
     const byName = MONTH_NAMES.findIndex(
@@ -182,25 +122,16 @@ export async function repairYear(
     created.months++;
     return createPage(
       env.MONTHLY_TOKEN,
-      {
-        Name: title(m.name),
-        "Nº do mês": { number: m.number },
-        Trimestres: relation(parentId),
-      },
+      monthProps(m, parentId),
       tpl("month", m.name),
     );
   });
 
   // Semanas: tudo que está sob os meses do ano
-  const weekPages = uniqueById(
-    (
-      await mapPool(monthPages, CONCURRENCY, (mp) =>
-        queryAll(env.WEEKLY_TOKEN, {
-          property: "Meses",
-          relation: { contains: mp.id },
-        }),
-      )
-    ).flat(),
+  const weekPages = await queryChildrenOf(
+    env.WEEKLY_TOKEN,
+    "Meses",
+    monthPages,
   );
   const weekByNumber = indexBy(
     weekPages,
@@ -209,7 +140,7 @@ export async function repairYear(
       matchNumber(titleProp(p.properties, "Name"), /^Semana (\d+)/i),
   );
   const weekIds = await mapSequential(plan.weeks, async (w) => {
-    // monthIndex < 0 (startToday): o mês de origem da semana está fora do plano
+    // monthIndex < 0 (recorte): o mês de origem da semana está fora do plano
     const parentId = monthIds[Math.max(w.monthIndex, 0)]!;
     const found = weekByNumber.get(w.number);
     if (found) {
@@ -222,12 +153,7 @@ export async function repairYear(
     created.weeks++;
     return createPage(
       env.WEEKLY_TOKEN,
-      {
-        Name: title(w.name),
-        "Semana nº": { number: w.number },
-        Data: richText(w.label),
-        Meses: relation(parentId),
-      },
+      weekProps(w, parentId),
       tpl("week", w.name),
     );
   });
@@ -250,12 +176,7 @@ export async function repairYear(
     created.days++;
     await createPage(
       env.DAILY_TOKEN,
-      {
-        Name: title(d.name),
-        "Dia Nº": { number: d.weekdayNumber },
-        Data: { date: { start: d.date } },
-        Semana: relation(parentId),
-      },
+      dayProps(d, parentId),
       tpl("day", d.name),
     );
   });

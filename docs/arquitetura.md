@@ -35,7 +35,9 @@ HTTP ─▶ src/http/server.ts ─▶ src/http/routes/<rota>.ts ─▶ src/servi
 
 - **Rotas** (`src/http/routes/`): só HTTP — schema Zod, status code, formato da resposta.
 - **services** (`src/services/`): casos de uso (regra de negócio). Não conhece Fastify.
-- **utils** (`src/utils/`): lógica pura, sem I/O (ex.: calendário).
+  - **`services/shared/`**: peças reutilizadas por mais de um caso de uso e que fazem I/O no Notion — `errors.ts` (`YearNotFoundError`, `YearAlreadyExistsError`), `year-pages.ts` (propriedades de cada nível, `createPage`, `prepareTemplates`, `trashPages`) e `year-hierarchy.ts` (`queryChildrenOf`, `collectYearHierarchy`: trimestres → meses → semanas → dias de um ano). Se duas funções de `services/` precisam do mesmo código, ele vai para cá.
+- **utils** (`src/utils/`): lógica pura, sem I/O (`routine-calendar.ts` = calendário; `notion-pages.ts` = `normId`, `uniqueById`, `indexBy`, `matchNumber`).
+- **scripts** (`src/scripts/`): programas de linha de comando, fora da API (hoje: `e2e-routine.ts`, ver [convencoes.md](./convencoes.md#testes)). Chamam os services direto.
 - **integrations** (`src/integrations/notion/`): cliente e helpers do Notion.
 - **db** (`src/db/`): client Prisma e gravação de logs.
 - **env** (`@notion-automation/env`): única porta de entrada para `process.env`.

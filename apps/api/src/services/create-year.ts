@@ -1,27 +1,20 @@
 import { env } from "@notion-automation/env";
-import { notion } from "@/integrations/notion/client";
 import {
-  CONCURRENCY,
   findYearPageId,
-  loadTemplates,
-  mapPool,
   mapSequential,
-  type PageTemplate,
-  relation,
-  richText,
-  templateById,
   title,
-  type PageProperties,
-  type TemplateLevel,
 } from "@/integrations/notion/helpers";
 import { buildPlan, type PlanFrom } from "@/utils/routine-calendar";
-
-export class YearAlreadyExistsError extends Error {
-  constructor(year: number) {
-    super(`O ano ${year} já existe no database de anos.`);
-    this.name = "YearAlreadyExistsError";
-  }
-}
+import { YearAlreadyExistsError } from "./shared/errors";
+import {
+  createPage,
+  dayProps,
+  monthProps,
+  prepareTemplates,
+  quarterProps,
+  trashPages,
+  weekProps,
+} from "./shared/year-pages";
 
 export type CreateYearResult = {
   year: number;
@@ -46,87 +39,52 @@ export async function createYear(
   }
 
   // Valida os templates antes de criar qualquer página (falha cedo, sem deixar lixo)
-  const templates = await loadTemplates({
-    quarter: plan.quarters.map((q) => q.name),
-    month: plan.months.map((m) => m.name),
-    week: plan.weeks.map((w) => w.name),
-    day: plan.days.map((d) => d.name),
-  });
+  const tpl = await prepareTemplates(plan);
 
   const createdPageIds: string[] = [];
-  const createPage = async (
-    databaseId: string,
-    properties: PageProperties,
-    // Ano: template padrão do database; demais níveis: template com o mesmo nome da página
-    template: PageTemplate = { type: "default" },
-  ) => {
-    const page = await notion.pages.create({
-      parent: { database_id: databaseId },
-      properties,
-      template,
-    });
-    createdPageIds.push(page.id);
-    return page.id;
+  const create = async (...args: Parameters<typeof createPage>) => {
+    const id = await createPage(...args);
+    createdPageIds.push(id);
+    return id;
   };
 
-  const tpl = (level: TemplateLevel, name: string) =>
-    templateById(templates, level, name);
-
   try {
-    // 1. Ano
-    const yearId = await createPage(env.YEAR_TOKEN, { Name: title(plan.name) });
+    // 1. Ano (template padrão do database)
+    const yearId = await create(env.YEAR_TOKEN, { Name: title(plan.name) });
 
     // 2. Trimestres → Ano
     const quarterIds = await mapSequential(plan.quarters, (q) =>
-      createPage(
+      create(
         env.QUARTERLY_TOKEN,
-        {
-          Name: title(q.name),
-          "Número do Trimestre": { number: q.number },
-          Anos: relation(yearId),
-        },
+        quarterProps(q, yearId),
         tpl("quarter", q.name),
       ),
     );
 
     // 3. Meses → Trimestre
     const monthIds = await mapSequential(plan.months, (m) =>
-      createPage(
+      create(
         env.MONTHLY_TOKEN,
-        {
-          Name: title(m.name),
-          "Nº do mês": { number: m.number },
-          Trimestres: relation(quarterIds[m.quarterIndex]!),
-        },
+        monthProps(m, quarterIds[m.quarterIndex]!),
         tpl("month", m.name),
       ),
     );
 
     // 4. Semanas → Mês
+    // monthIndex < 0: a semana começou num mês que não será criado (recorte): liga ao 1º mês
     const weekIds = await mapSequential(plan.weeks, (w) =>
-      createPage(
+      create(
         env.WEEKLY_TOKEN,
-        {
-          Name: title(w.name),
-          "Semana nº": { number: w.number },
-          Data: richText(w.label),
-          // monthIndex < 0: a semana começou num mês que não será criado (startToday)
-          Meses: relation(monthIds[Math.max(w.monthIndex, 0)]!),
-        },
+        weekProps(w, monthIds[Math.max(w.monthIndex, 0)]!),
         tpl("week", w.name),
       ),
     );
 
     // 5. Dias → Semana
     await mapSequential(plan.days, (d) =>
-      createPage(
+      create(
         env.DAILY_TOKEN,
-        {
-          Name: title(d.name),
-          "Dia Nº": { number: d.weekdayNumber },
-          Data: { date: { start: d.date } },
-          Semana: relation(weekIds[d.weekIndex]!),
-        },
+        dayProps(d, weekIds[d.weekIndex]!),
         tpl("day", d.name),
       ),
     );
@@ -145,9 +103,7 @@ export async function createYear(
   } catch (error) {
     // Falhou no meio: manda para a lixeira o que já foi criado, para que o ano
     // possa ser gerado de novo sem deixar páginas órfãs/duplicadas.
-    await mapPool(createdPageIds, CONCURRENCY, (id) =>
-      notion.pages.update({ page_id: id, in_trash: true }).catch(() => null),
-    );
+    await trashPages(createdPageIds, { ignoreErrors: true });
     throw error;
   }
 }
