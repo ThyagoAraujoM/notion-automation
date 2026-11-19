@@ -76,6 +76,15 @@
 - **Alternativas:** tabela de operações com `status` e índice único parcial (`WHERE status = 'running'`): descartada por exigir SQL manual fora do schema do Prisma e dar mais histórico do que se usa hoje (os logs de sucesso já existem). Lock em memória: não sobrevive a reinício e não vale com mais de uma instância.
 - **Consequências:** a API passa a depender do Postgres também para executar (não só para logar). A trava é por ano e vale entre os 3 tipos de operação. Se um dia houver status consultável (rota 202 + polling), a tabela cresce para um registro de operações.
 
+## 008 — Timeout de 60 s por chamada ao Notion, resposta 504
+
+- **Data:** 2026-11-19
+- **Status:** aceita
+- **Contexto:** a requisição inteira dura minutos (decisão 006), então um timeout total não serve; o risco é uma única chamada ao Notion travar e deixar a requisição pendurada.
+- **Decisão:** `timeoutMs: 60_000` no client do Notion (por chamada) e **504** nas rotas quando estourar, com mensagem dizendo que o Notion está demorando. O tempo estimado de cada rota fica na descrição do Swagger.
+- **Alternativas:** timeout na requisição HTTP inteira (descartado: cortaria criações normais de 7 min); rota assíncrona com 202 + consulta de status (adiada: só compensa se o `web` passar a consumir a API).
+- **Consequências:** uma chamada lenta mas válida (>60 s) vira erro; se isso acontecer na prática, aumentar `NOTION_TIMEOUT_MS`. A rota `GET /databases/:id/schema` ainda responde 500 em timeout.
+
 ## Pendentes
 
 - [ ] Padrão de nomes para rotas HTTP

@@ -6,6 +6,7 @@ import {
   YearNotFoundError,
 } from "@/services/shared/errors";
 import { withYearLock } from "@/services/shared/year-lock";
+import { isNotionTimeout } from "@/integrations/notion/client";
 import { MissingTemplatesError } from "@/integrations/notion/helpers";
 import { InvalidStartTodayError } from "@/utils/routine-calendar";
 import { saveCreateYearLog } from "@/db/save-log";
@@ -41,8 +42,15 @@ export async function newYear(app: FastifyInstance) {
           "- **`404`**: `repair: 1` com um ano que não existe.",
           "- **`409`**: o ano já existe (sem `repair`) ou já há outra operação (criar, reparar ou apagar) em andamento para esse ano.",
           "- **`422`**: faltam templates no Notion (a resposta lista os nomes); nada é criado (vale também para `repair`).",
+          "- **`504`**: o Notion passou de 60 s para responder uma chamada. Na criação, o que já tinha sido criado vai para a lixeira (rollback); no `repair`, basta repetir.",
           "",
-          "**Atenção**: as páginas são criadas uma por vez, com template; a criação de um ano completo (~430 páginas) leva cerca de 6 a 7 minutos e a requisição só responde no final. O servidor não tem timeout, mas o cliente também não pode ter (ex.: `curl` sem `--max-time` curto).",
+          "**Tempo estimado** (as páginas são criadas uma por vez, com template, e a requisição só responde no final; o cliente não pode ter timeout curto, ex.: `curl` sem `--max-time` baixo):",
+          "",
+          "- **Ano completo** (~430 páginas): cerca de **6 a 7 minutos**.",
+          "- **`startToday: 1`**: proporcional ao que falta (~1 s por página; de 1º de outubro em diante, uns 2 min).",
+          "- **`repair: 1`**: ~1 min só para conferir o ano, mais ~1 s por página criada.",
+          "- Cada chamada ao Notion tem limite de **60 s**; se estourar, a resposta é `504`.",
+          "- Só uma operação por ano roda por vez (`409` se houver outra em andamento).",
         ].join("\n"),
         body: z
           .object({
@@ -109,6 +117,7 @@ export async function newYear(app: FastifyInstance) {
           409: errorResponse,
           422: errorResponse,
           500: errorResponse,
+          504: errorResponse,
         },
       },
     },
@@ -165,6 +174,14 @@ export async function newYear(app: FastifyInstance) {
           return reply
             .status(422)
             .send({ success: false, message: error.message });
+        }
+        if (isNotionTimeout(error)) {
+          return reply.status(504).send({
+            success: false,
+            message: repair
+              ? "O Notion está demorando para responder (mais de 60 s numa chamada). Tente novamente em instantes."
+              : "O Notion está demorando para responder (mais de 60 s numa chamada). O que já tinha sido criado foi enviado para a lixeira; tente novamente em instantes ou use repair para conferir o ano.",
+          });
         }
         request.log.error(error);
         return reply.status(500).send({

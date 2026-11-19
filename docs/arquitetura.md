@@ -107,6 +107,8 @@ Regras do calendário:
 - Cada semana liga a **um** mês: o do seu primeiro dia dentro do ano.
 - `Dia Nº` é o dia da semana, **Domingo = 1 … Sábado = 7** (padrão que já existia no database).
 - Se algo falhar no meio, as páginas já criadas vão para a lixeira (rollback best-effort), para o ano poder ser gerado de novo.
+- **Timeout por chamada ao Notion:** o client tem `timeoutMs` de 60 s (`NOTION_TIMEOUT_MS` em `integrations/notion/client.ts`). Se uma chamada estourar, `isNotionTimeout` identifica o erro e as rotas respondem **504** ("o Notion está demorando para responder"). No `createYear` o rollback ainda roda (páginas já criadas vão para a lixeira; uma página cuja criação deu timeout pode ter sido criada sem a gente saber — use `repair`); `repair` e `deleteYear` são idempotentes, basta repetir.
+- **Tempo estimado** (documentado no Swagger de cada rota): ano completo ~6–7 min para criar, ~3–4 min para apagar; `startToday` proporcional ao que falta (~1 s/página). Medido no E2E (2090): criar 110 páginas ≈ 1 min, reparar 38 ≈ 30 s, apagar 147 ≈ 1 min.
 - Criação **uma página por vez** (`mapSequential`): com template + relação, criar em paralelo fez o Notion mandar páginas para a lixeira (ver decisão 006) e embaralhava a ordem dos filhos na relação do pai. ~430 páginas levam ~6–7 min e a requisição só responde no final; o Fastify roda sem timeout de conexão/requisição, e o cliente também não pode ter.
 
 ## Banco de dados (PostgreSQL + Prisma)
