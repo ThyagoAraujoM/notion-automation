@@ -4,7 +4,7 @@
 - **Tipo:** chore
 - **Status:** concluída
 - **Branch:** `chore/workflows-skills`
-- **PR:** —
+- **PR:** [#1](https://github.com/ThyagoAraujoM/notion-automation/pull/1)
 - **Criada em:** 2026-11-20
 
 ## Objetivo
