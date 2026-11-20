@@ -49,3 +49,4 @@ Reverter o commit do squash na `main`. Nada de runtime depende destes arquivos.
 ## Acompanhamento
 
 - 2026-11-20 — Usuário escolheu `docs/workflows/<slug>/` em vez de `docs/specs/`. Branch criada a partir da `main` local, que está 6 commits à frente do `origin/main` (ainda sem push): o PR vai precisar do push da `main` antes, ou vai incluir esses commits.
+- 2026-11-20 — Revisão (`review.md`): 8 achados do `revisor`, todos corrigidos na branch (commit `fix:`); o principal foi o pós-merge do `/pr`, que exigiria commit direto na `main`. A skill `review` virou `revisar` para não colidir com o `/review` embutido.
