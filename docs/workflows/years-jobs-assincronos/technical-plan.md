@@ -37,12 +37,12 @@ Contratos: **as três rotas mudam de 200/201 para 202** e entra `GET /years/jobs
 
 ## Incrementos
 
-| #   | Mudança                                                                   | Testes previstos                                                                                                                    | Critérios            | Pronto quando  | Status |
-| --- | ------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | -------------------- | -------------- | ------ |
-| 1   | Spec e plano                                                              | — (docs)                                                                                                                            | —                    | commitados     | ⏳     |
-| 2   | `YearJob` + migration + `db/year-job.ts` + recuperação no boot            | migration aplicada no Postgres local; `migrate diff` sem drift; check-types                                                         | CA7 (parte de banco) | portão verde   | ⏳     |
-| 3   | `acquireYearLock`, runner, `GET /years/jobs/:jobId`, as três rotas em 202 | `years.test.ts`: 202 + Location; 400/409 síncronos; job ok/falho (404/409/422/504/500); trava liberada; log no fim; GET 200/404/400 | CA1–CA6, CA8         | portão verde   | ⏳     |
-| 4   | Docs, Swagger, ADR 017, landing, pendências                               | `app.test.ts` com a rota nova                                                                                                       | CA9                  | docs coerentes | ⏳     |
+| #   | Mudança                                                                   | Testes previstos                                                                                                                    | Critérios            | Pronto quando  | Status       |
+| --- | ------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | -------------------- | -------------- | ------------ |
+| 1   | Spec e plano                                                              | — (docs)                                                                                                                            | —                    | commitados     | ✅ `150e744` |
+| 2   | `YearJob` + migration + `db/year-job.ts` + recuperação no boot            | migration aplicada no Postgres local; `migrate diff` sem drift; check-types                                                         | CA7 (parte de banco) | portão verde   | ✅ `692bf93` |
+| 3   | `acquireYearLock`, runner, `GET /years/jobs/:jobId`, as três rotas em 202 | `years.test.ts`: 202 + Location; 400/409 síncronos; job ok/falho (404/409/422/504/500); trava liberada; log no fim; GET 200/404/400 | CA1–CA6, CA8         | portão verde   | ✅ `43b085a` |
+| 4   | Docs, Swagger, ADR 017, landing, pendências                               | `app.test.ts` com a rota nova                                                                                                       | CA9                  | docs coerentes | ✅           |
 
 As três rotas mudam no mesmo incremento: `withYearLock` sai, e manter duas formas de travar só para deixar um commit intermediário verde não compensa.
 
@@ -60,3 +60,7 @@ Reverter o merge volta as rotas para o modo síncrono. A tabela `year_job` pode 
 ## Acompanhamento
 
 - 2026-11-20 — Escopo: o usuário escolheu aplicar o 202 nas três rotas (não só no `POST /years`).
+- 2026-11-20 — Incremento 2: migration gerada com `prisma migrate diff --from-config-datasource` e aplicada com `db:deploy` no Postgres local; `migrate diff --exit-code` sem drift.
+- 2026-11-20 — Teste de mutação: sem o `release()` no `finally` do job, 10 testes de rota falham.
+- 2026-11-20 — Integração com a API real (já no ar, `tsx watch`), sem escrever no Notion: `DELETE /years/1990` → 202 + `Location`; o GET do job vai de `running` para `failed`/404 em <1 s. Dois `DELETE /years/1992` seguidos → 202 e 409 na hora. `POST /years` 2026 → 202 e job `failed`/409 ("já existe"). `startToday` com 2030 → 400 síncrono. `GET` de job inexistente → 404. As linhas correspondentes apareceram em `operation_log` com código final e duração.
+- 2026-11-20 — E2E no Notion real não rodado: os services não mudaram e o E2E chama os services direto.

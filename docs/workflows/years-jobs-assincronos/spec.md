@@ -2,7 +2,7 @@
 
 - **Slug:** `years-jobs-assincronos`
 - **Tipo:** feature
-- **Status:** em andamento
+- **Status:** em revisão
 - **Branch:** `feat/years-jobs-assincronos`
 - **PR:** —
 - **Criada em:** 2026-11-20
@@ -22,15 +22,15 @@ Hoje quem chama `POST /years` fica 6–7 min com a conexão aberta esperando a r
 
 ## Critérios de aceitação
 
-- [ ] **CA1** — `POST /years`, `POST /years/:year/repair` e `DELETE /years/:year` respondem **202** com `{ success: true, message, jobId, year, operation, status: "running", statusUrl }` e o header `Location: /years/jobs/<jobId>`, sem esperar a operação terminar.
-- [ ] **CA2** — Continuam síncronos (antes do 202): 400 de validação do Zod, 400 de `startToday` fora do ano atual (create e repair) e 409 quando já há uma operação em andamento para o ano. Nesses casos a operação não é iniciada.
-- [ ] **CA3** — `GET /years/jobs/:jobId` responde 200 com `jobId`, `year`, `operation`, `status` (`running` | `succeeded` | `failed`), `createdAt`, `finishedAt`, `durationMs`, `statusCode` e `result`. Enquanto roda, `statusCode`/`result`/`finishedAt` são `null`. Ao terminar, `statusCode` é o código que a rota síncrona daria (201/200, ou 404/409/422/504/500) e `result` é o corpo que ela daria. 404 para um `jobId` inexistente e 400 para um id que não é UUID.
-- [ ] **CA4** — Um erro dentro do job (ano já existe, ano inexistente, templates faltando, timeout do Notion, erro inesperado) marca o job como `failed`, com o código e a mensagem que a rota síncrona daria. Erro inesperado vira 500 sem vazar a mensagem interna em `result`, que fica só na coluna `error`.
-- [ ] **CA5** — A trava do ano fica presa do 202 até o fim do job e é liberada em qualquer desfecho (sucesso, erro, falha ao gravar o job). Um erro no job nunca derruba o processo (nada de rejeição não tratada).
-- [ ] **CA6** — Uma linha em `operation_log` por operação aceita, gravada quando o job termina, com o código final e a duração desde o pedido. Os 400/409 síncronos continuam gravando como antes.
-- [ ] **CA7** — Se a API reiniciar com jobs ainda `running`, eles são marcados como `failed` ao subir (código 500, mensagem dizendo que a operação foi interrompida e sugerindo `repair`), junto com a limpeza das travas.
-- [ ] **CA8** — Testes de rota (`app.inject`) cobrindo CA1–CA7, sem Notion nem Postgres e sem esperas por tempo (`setTimeout`).
-- [ ] **CA9** — Docs atualizadas: Swagger das rotas, `docs/arquitetura.md`, `docs/convencoes.md` (como testar job), ADR 017, landing page, `PF-001` em "Resolvidas".
+- [x] **CA1** — `POST /years`, `POST /years/:year/repair` e `DELETE /years/:year` respondem **202** com `{ success: true, message, jobId, year, operation, status: "running", statusUrl }` e o header `Location: /years/jobs/<jobId>`, sem esperar a operação terminar.
+- [x] **CA2** — Continuam síncronos (antes do 202): 400 de validação do Zod, 400 de `startToday` fora do ano atual (create e repair) e 409 quando já há uma operação em andamento para o ano. Nesses casos a operação não é iniciada.
+- [x] **CA3** — `GET /years/jobs/:jobId` responde 200 com `jobId`, `year`, `operation`, `status` (`running` | `succeeded` | `failed`), `createdAt`, `finishedAt`, `durationMs`, `statusCode` e `result`. Enquanto roda, `statusCode`/`result`/`finishedAt` são `null`. Ao terminar, `statusCode` é o código que a rota síncrona daria (201/200, ou 404/409/422/504/500) e `result` é o corpo que ela daria. 404 para um `jobId` inexistente e 400 para um id que não é UUID.
+- [x] **CA4** — Um erro dentro do job (ano já existe, ano inexistente, templates faltando, timeout do Notion, erro inesperado) marca o job como `failed`, com o código e a mensagem que a rota síncrona daria. Erro inesperado vira 500 sem vazar a mensagem interna em `result`, que fica só na coluna `error`.
+- [x] **CA5** — A trava do ano fica presa do 202 até o fim do job e é liberada em qualquer desfecho (sucesso, erro, falha ao gravar o job). Um erro no job nunca derruba o processo (nada de rejeição não tratada).
+- [x] **CA6** — Uma linha em `operation_log` por operação aceita, gravada quando o job termina, com o código final e a duração desde o pedido. Os 400/409 síncronos continuam gravando como antes.
+- [x] **CA7** — Se a API reiniciar com jobs ainda `running`, eles são marcados como `failed` ao subir (código 500, mensagem dizendo que a operação foi interrompida e sugerindo `repair`), junto com a limpeza das travas.
+- [x] **CA8** — Testes de rota (`app.inject`) cobrindo CA1–CA7, sem Notion nem Postgres e sem esperas por tempo (`setTimeout`).
+- [x] **CA9** — Docs atualizadas: Swagger das rotas, `docs/arquitetura.md`, `docs/convencoes.md` (como testar job), ADR 017, landing page, `PF-001` em "Resolvidas".
 
 ## Fora de escopo
 

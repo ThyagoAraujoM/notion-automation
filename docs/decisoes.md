@@ -156,6 +156,15 @@
 - **Alternativas:** `core.autocrlf false` só na máquina do usuário (não acompanha o repositório); `endOfLine: "crlf"` no Prettier (deixaria o repositório dependente do Windows e quebraria scripts shell).
 - **Consequências:** `git status` só mostra mudança real. O `eol=lf` do `.gitattributes` tem precedência sobre o `core.autocrlf` de cada máquina, então vale para qualquer um que clonar. Clones que já existiam podem continuar com `CRLF` no disco até renormalizar (ver `docs/convencoes.md`, Geral). **Para novos projetos:** criar o `.gitattributes` no primeiro commit.
 
+## 017 — Operações longas em segundo plano (202 + job no Postgres + polling)
+
+- **Data:** 2026-11-20
+- **Status:** aceita
+- **Contexto:** `POST /years` levava 6–7 min numa única requisição, e `DELETE /years/:year` (3–4 min) e o `repair` (1 min ou mais) tinham o mesmo problema. Proxies, navegadores e clientes HTTP cortam conexões longas, e quem chamava ficava preso esperando (`PF-001`).
+- **Decisão:** as três rotas validam o que é síncrono (Zod, `startToday`, trava do ano), gravam um job em `year_job` (`running`), disparam o service **sem `await`** no próprio processo e respondem **202** com `jobId` e `Location: /years/jobs/:jobId`. Quando o service termina, o job recebe o código e o corpo que a rota síncrona daria (`succeeded`/`failed`), a linha do `operation_log` é gravada e a trava é solta. O cliente faz polling em `GET /years/jobs/:jobId`. Ao subir, a API marca como `failed` os jobs que ficaram `running`.
+- **Alternativas:** pg-boss ou graphile-worker (sugestão da `PF-001`; fila com retentativa, vários workers e agendamento, nada disso necessário com uma instância só. O `createYear` já faz rollback e repair/delete são idempotentes, e retentar automaticamente poderia duplicar páginas: seria uma dependência a mais sem ganho); reaproveitar `operation_log` como tabela de job (é histórico de operações concluídas, e misturar o "em andamento" exigiria colunas nulas e updates); job só em memória (o status se perde ao reiniciar); SSE/WebSocket (mantêm a conexão longa aberta, que é o que se quer evitar).
+- **Consequências:** contrato das três rotas mudou de 200/201 para 202. Erros que dependem do Notion (ano já existe, ano não existe, templates, timeout) aparecem no status do job, não na resposta do POST/DELETE. Se o processo cair no meio, a operação para sem rollback (o job vira `failed` e a mensagem indica `repair`). **Vale enquanto houver uma instância da API:** com várias, seria preciso um worker separado e uma fila de verdade (aí sim pg-boss). A tabela `year_job` cresce sem limpeza automática.
+
 ## Pendentes
 
 > Itens de backlog foram para [pendencias.md](./pendencias.md) (`PF-NNN`). Aqui ficam só decisões em aberto.

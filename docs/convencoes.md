@@ -76,10 +76,11 @@
   - `http/routes/<recurso>/*.test.ts`: cada rota via `app.inject()`, com status, validação e tradução de erros.
   - `http/app.test.ts`: o OpenAPI gerado (`/docs/json`): rotas, tags, body e status declarados.
 - Data atual: use `vi.useFakeTimers()` + `vi.setSystemTime(...)` e `vi.useRealTimers()` no `afterEach`.
-- **Testar rota:** `const app = buildApp({ logger: false })`, `beforeAll(() => app.ready())`, `afterAll(() => app.close())` e `app.inject({ method, url, payload })`. Mocke os services (`vi.mock("@/services/create-year", () => ({ createYear: vi.fn() }))`), o log (`@/db/operation-log`, com `saveOperationLog: vi.fn()`) e a trava (`@/services/shared/year-lock`, com `withYearLock` chamando `fn()`). Exemplo: `http/routes/years/years.test.ts`.
+- **Testar rota:** `const app = buildApp({ logger: false })`, `beforeAll(() => app.ready())`, `afterAll(() => app.close())` e `app.inject({ method, url, payload })`. Mocke os services (`vi.mock("@/services/create-year", () => ({ createYear: vi.fn() }))`), o log (`@/db/operation-log`, com `saveOperationLog: vi.fn()`), a trava (`@/services/shared/year-lock`, com `acquireYearLock` devolvendo um `release: vi.fn()`) e os jobs (`@/db/year-job`, com `createYearJob` devolvendo `{ id }`). Exemplo: `http/routes/years/years.test.ts`.
+- **Testar operação em segundo plano (202):** a resposta volta antes de o job terminar. Para checar o desfecho, `await settleYearJobs()` (`@/http/year-job`) e leia o que foi passado ao `finishYearJob` mockado. Nunca use `setTimeout`/`sleep`. Para provar que a rota não espera o service, devolva uma promise controlada pelo teste e só resolva depois de conferir o 202.
 - **Mockar o Notion:** `vi.mock("./client", () => ({ notion: { ... só os métodos usados: vi.fn() } }))` e `vi.mocked(notion.x.y).mockImplementation(...)`. Erros do client: `new RequestTimeoutError()` (504) e `new APIResponseError({ code, status, message, headers: new Headers(), rawBodyText: "", additional_data: undefined, request_id: undefined })`.
 - **Prisma:** nunca é chamado nos testes; mocke o módulo de `db/` que a rota usa.
-- Services (`create-year`, `repair-year`, `delete-year`) e a trava real (`withYearLock` + Postgres) ainda não têm teste unitário; a orquestração dos services é coberta pelo E2E. Todo teste que usa `buildApp` mocka `@/db/operation-log` e `@/services/shared/year-lock`, mesmo sem chamar rotas de `/years`.
+- Services (`create-year`, `repair-year`, `delete-year`) e a trava real (`acquireYearLock` + Postgres) ainda não têm teste unitário; a orquestração dos services é coberta pelo E2E. Todo teste que usa `buildApp` mocka `@/db/operation-log`, `@/db/year-job` e `@/services/shared/year-lock`, mesmo sem chamar rotas de `/years`.
 
 ### E2E no Notion real
 
