@@ -13,7 +13,7 @@
 | CA2      | ✅        | passos `pnpm install --frozen-lockfile`, `lint`, `check-types`, `test`, `build`; nenhum secret nem `services:`         |
 | CA3      | ✅        | os mesmos comandos passaram localmente (100 testes; build do web)                                                      |
 | CA4      | ✅        | seção "CI" em `docs/convencoes.md`, ADR 018, linha no `CLAUDE.md`, `PF-002` em "Resolvidas"                            |
-| CA5      | ⏳        | depende do push: conferir o check `Portão (lint, tipos, testes, build)` verde no PR e marcar na spec                   |
+| CA5      | ✅        | PR #6: check `Portão (lint, tipos, testes, build)` verde em 43 s (run 44834284821)                                     |
 
 ## Comandos executados
 

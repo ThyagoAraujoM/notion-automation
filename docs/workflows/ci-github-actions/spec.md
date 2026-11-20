@@ -4,7 +4,7 @@
 - **Tipo:** chore
 - **Status:** concluída
 - **Branch:** `chore/ci-github-actions`
-- **PR:** —
+- **PR:** [#6](https://github.com/ThyagoAraujoM/notion-automation/pull/6)
 - **Criada em:** 2026-11-20
 
 ## Objetivo
@@ -26,7 +26,7 @@ Rodar o portão de qualidade (`lint`, `check-types`, `test`) e o build do web nu
 - [x] **CA2** — O job faz `pnpm install --frozen-lockfile`, `pnpm lint`, `pnpm check-types`, `pnpm test` e `pnpm build`, sem nenhum secret nem Postgres.
 - [x] **CA3** — Os mesmos comandos passam localmente (portão e build do web).
 - [x] **CA4** — Docs coerentes: convenção "CI" em `docs/convencoes.md`, ADR 018, `CLAUDE.md`, e `PF-002` movida para "Resolvidas".
-- [ ] **CA5** — O check `Portão (lint, tipos, testes, build)` roda e fica verde no PR da própria demanda.
+- [x] **CA5** — O check `Portão (lint, tipos, testes, build)` roda e fica verde no PR da própria demanda.
 
 ## Fora de escopo
 
