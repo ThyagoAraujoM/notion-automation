@@ -145,7 +145,7 @@
 - **Contexto:** no Windows o Git usa `core.autocrlf=true` (escreve `CRLF` no disco) e o Prettier grava `LF`. A cada formatação dezenas de arquivos apareciam como modificados sem mudança de conteúdo, e todo commit avisava "LF will be replaced by CRLF" (`PF-015`).
 - **Decisão:** `.gitattributes` com `* text=auto eol=lf` e binários marcados como `binary`. O repositório já estava todo em `LF`; só os arquivos do disco foram convertidos e o índice renormalizado.
 - **Alternativas:** `core.autocrlf false` só na máquina do usuário (não acompanha o repositório); `endOfLine: "crlf"` no Prettier (deixaria o repositório dependente do Windows e quebraria scripts shell).
-- **Consequências:** `git status` só mostra mudança real. Vale para qualquer máquina que clonar. **Para novos projetos:** criar o `.gitattributes` no primeiro commit.
+- **Consequências:** `git status` só mostra mudança real. O `eol=lf` do `.gitattributes` tem precedência sobre o `core.autocrlf` de cada máquina, então vale para qualquer um que clonar. Clones que já existiam podem continuar com `CRLF` no disco até renormalizar (ver `docs/convencoes.md`, Geral). **Para novos projetos:** criar o `.gitattributes` no primeiro commit.
 
 ## Pendentes
 
