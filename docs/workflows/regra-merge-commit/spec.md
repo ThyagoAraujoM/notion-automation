@@ -2,7 +2,7 @@
 
 - **Slug:** `regra-merge-commit`
 - **Tipo:** docs
-- **Status:** em revisão
+- **Status:** concluída
 - **Branch:** `docs/regra-merge-commit`
 - **PR:** —
 - **Criada em:** 2026-11-20
