@@ -2,7 +2,7 @@
 
 - **Slug:** `workflows-skills`
 - **Tipo:** chore
-- **Status:** em revisão
+- **Status:** concluída
 - **Branch:** `chore/workflows-skills`
 - **PR:** —
 - **Criada em:** 2026-11-20

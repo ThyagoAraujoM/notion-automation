@@ -36,6 +36,6 @@ Regras sempre carregadas: `.claude/rules/git-workflow.md` (branches, commits, sq
 
 ## Demandas
 
-| Slug                                    | Tipo  | Status     |
-| --------------------------------------- | ----- | ---------- |
-| [workflows-skills](./workflows-skills/) | chore | em revisão |
+| Slug                                    | Tipo  | Status    |
+| --------------------------------------- | ----- | --------- |
+| [workflows-skills](./workflows-skills/) | chore | concluída |
