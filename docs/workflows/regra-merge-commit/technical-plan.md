@@ -36,3 +36,4 @@ Reverter o merge commit desta demanda (`git revert -m 1 <merge>`).
 ## Acompanhamento
 
 - 2026-11-20 — Demandas antigas (`workflows-skills`, `log-operacoes-postgres-host`) mantêm o texto de quando foram feitas: são registro histórico.
+- 2026-11-20 — Registrada `PF-015` (fim de linha misto, sem `.gitattributes`): fora do escopo, cada formatação marca dezenas de arquivos como modificados só por CRLF/LF.
