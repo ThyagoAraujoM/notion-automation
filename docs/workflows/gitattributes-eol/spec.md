@@ -2,7 +2,7 @@
 
 - **Slug:** `gitattributes-eol`
 - **Tipo:** chore
-- **Status:** em revisão
+- **Status:** concluída
 - **Branch:** `chore/gitattributes-eol`
 - **PR:** —
 - **Criada em:** 2026-11-20
