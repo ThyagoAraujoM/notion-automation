@@ -414,7 +414,7 @@ async function main() {
       }
     } else if (yearId && !deleted && KEEP) {
       log(
-        `\n(--keep) o ano ${YEAR} ficou no Notion; apague com DELETE /deleteYear?year=${YEAR}.`,
+        `\n(--keep) o ano ${YEAR} ficou no Notion; apague com DELETE /years/${YEAR}.`,
       );
     }
   }

@@ -1,37 +1,29 @@
-import { isNotionTimeout } from "@/integrations/notion/client";
-import { deleteYear } from "@/services/delete-year";
-import {
-  OperationInProgressError,
-  YearNotFoundError,
-} from "@/services/shared/errors";
-import { withYearLock } from "@/services/shared/year-lock";
 import { saveDeletedYearLog } from "@/db/save-log";
+import { NOTION_SLOW, toHttpError } from "@/http/errors";
+import { errorResponse, levelCounts, yearParams } from "@/http/schemas/common";
+import { deleteYear } from "@/services/delete-year";
+import { withYearLock } from "@/services/shared/year-lock";
 import { FastifyInstance } from "fastify";
 import { ZodTypeProvider } from "fastify-type-provider-zod";
 import z from "zod";
 
-const errorResponse = z.object({
-  success: z.boolean(),
-  message: z.string(),
-});
-
 export async function deleteYearRoute(app: FastifyInstance) {
   app.withTypeProvider<ZodTypeProvider>().delete(
-    "/deleteYear",
+    "/years/:year",
     {
       schema: {
-        tags: ["Rotine"],
+        tags: ["Rotina"],
         summary:
           "Apaga um ano inteiro da rotina (Ano, Trimestres, Meses, Semanas e Dias)",
         description: [
-          "**Parâmetros** (query string):",
+          "**Parâmetros**:",
           "",
-          "- **`year`**: obrigatório. Ano a apagar (ex.: `?year=2026`).",
+          "- **`year`** (path): obrigatório. Ano a apagar (ex.: `DELETE /years/2026`).",
           "",
           "**Respostas**:",
           "",
           "- **`200`**: ano apagado, com a contagem de páginas removidas por nível.",
-          "- **`400`**: `year` ausente ou inválido.",
+          "- **`400`**: `year` inválido.",
           "- **`404`**: o ano não existe no database de anos.",
           "- **`409`**: já existe outra operação (criar, reparar ou apagar) em andamento para esse ano.",
           "- **`504`**: o Notion passou de 60 s para responder uma chamada. O que já foi para a lixeira continua lá; basta repetir o pedido para apagar o que sobrou.",
@@ -40,26 +32,13 @@ export async function deleteYearRoute(app: FastifyInstance) {
           "",
           "**Tempo estimado**: um ano completo (~430 páginas) leva cerca de **3 a 4 minutos** (respeitando o limite de taxa do Notion); cada chamada ao Notion tem limite de 60 s (`504` se estourar).",
         ].join("\n"),
-        querystring: z.object({
-          year: z.coerce
-            .number()
-            .int()
-            .min(1970)
-            .max(2100)
-            .describe("Ano a apagar (obrigatório)."),
-        }),
+        params: yearParams,
         response: {
           200: z.object({
-            success: z.boolean(),
+            success: z.literal(true),
             message: z.string(),
             year: z.number(),
-            deleted: z.object({
-              years: z.number(),
-              quarters: z.number(),
-              months: z.number(),
-              weeks: z.number(),
-              days: z.number(),
-            }),
+            deleted: levelCounts.extend({ years: z.number() }),
           }),
           400: errorResponse,
           404: errorResponse,
@@ -70,42 +49,34 @@ export async function deleteYearRoute(app: FastifyInstance) {
       },
     },
     async (request, reply) => {
-      const { year } = request.query;
+      const { year } = request.params;
 
       try {
         const result = await withYearLock(year, "deleteYear", () =>
           deleteYear(year),
         );
         const body = {
-          success: true,
+          success: true as const,
           message: `Rotina de ${year} enviada para a lixeira do Notion.`,
           ...result,
         };
         await saveDeletedYearLog(body).catch((e) => request.log.error(e));
         return reply.status(200).send(body);
       } catch (error) {
-        if (error instanceof YearNotFoundError) {
+        const known = toHttpError(
+          error,
+          [404, 409, 504],
+          `${NOTION_SLOW} Tente novamente em instantes para apagar o que sobrou.`,
+        );
+        if (known) {
           return reply
-            .status(404)
-            .send({ success: false, message: error.message });
-        }
-        if (error instanceof OperationInProgressError) {
-          return reply
-            .status(409)
-            .send({ success: false, message: error.message });
-        }
-        if (isNotionTimeout(error)) {
-          return reply.status(504).send({
-            success: false,
-            message:
-              "O Notion está demorando para responder (mais de 60 s numa chamada). Tente novamente em instantes para apagar o que sobrou.",
-          });
+            .status(known.status)
+            .send({ success: false, message: known.message });
         }
         request.log.error(error);
-        return reply.status(500).send({
-          success: false,
-          message: "Erro ao apagar a rotina anual.",
-        });
+        return reply
+          .status(500)
+          .send({ success: false, message: "Erro ao apagar a rotina anual." });
       }
     },
   );

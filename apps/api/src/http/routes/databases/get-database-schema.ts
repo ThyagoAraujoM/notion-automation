@@ -1,13 +1,9 @@
+import { errorResponse } from "@/http/schemas/common";
 import { getDatabaseSchema } from "@/services/get-database-schema";
 import { APIErrorCode, APIResponseError } from "@notionhq/client";
 import { FastifyInstance } from "fastify";
 import { ZodTypeProvider } from "fastify-type-provider-zod";
 import z from "zod";
-
-const errorResponse = z.object({
-  success: z.literal(false),
-  message: z.string(),
-});
 
 export async function getDatabaseSchemaRoute(app: FastifyInstance) {
   app.withTypeProvider<ZodTypeProvider>().get(
