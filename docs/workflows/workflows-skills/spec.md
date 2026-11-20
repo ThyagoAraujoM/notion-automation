@@ -19,11 +19,11 @@ Decisões tomadas com o usuário (2026-11-20): squash merge; artefatos das deman
 
 ## Critérios de aceitação
 
-- [x] **CA1** — Existem as skills `spec-authoring`, `feature`, `bugfix`, `review` e `pr` em `.claude/skills/`, cada uma com Propósito, Quando usar, Entradas, Etapas, Pontos de decisão, Quality gates, Critério de saída e Handoff.
+- [x] **CA1** — Existem as skills `spec-authoring`, `feature`, `bugfix`, `revisar` e `pr` em `.claude/skills/`, cada uma com Propósito, Quando usar, Entradas, Etapas, Pontos de decisão, Quality gates, Critério de saída e Handoff.
 - [x] **CA2** — Os templates `spec.md`, `technical-plan.md`, `review.md` e `handoff.md` ficam dentro da skill `spec-authoring` e as outras skills os referenciam.
 - [x] **CA3** — Regras sempre carregadas em `.claude/rules/`: fluxo git (branch por demanda, commits por incremento, squash merge, nada direto na `main`) e registro de correções pendentes.
 - [x] **CA4** — `docs/pendencias.md` existe com IDs `PF-NNN` e recebe o backlog combinado com o usuário.
-- [x] **CA5** — O `/revisar` deixa de ser um comando solto e vira a skill `review`, que usa o agente `revisor` e grava `review.md`.
+- [x] **CA5** — O `/revisar` deixa de ser um comando solto e vira a skill `revisar`, que usa o agente `revisor` e grava `review.md`.
 - [x] **CA6** — `.github/pull_request_template.md` com os mesmos campos do handoff de PR.
 - [x] **CA7** — CLAUDE.md, `docs/convencoes.md`, `docs/decisoes.md` e os agentes descrevem o fluxo novo (regra de commits atualizada para squash).
 - [x] **CA8** — Esta própria demanda segue o fluxo (branch, spec, plano, review) como exemplo.

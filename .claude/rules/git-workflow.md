@@ -22,4 +22,4 @@ Vale para toda alteração de arquivos versionados.
 - A branch vai para a `main` por **PR com squash merge**: o título do PR vira o único commit na `main` (um pedido = um commit).
 - Título do PR: Conventional Commit em português, ex.: `feat: rota de status do ano`.
 - Abrir PR, fazer push e dar merge são ações externas: só com pedido explícito do usuário (skill `pr`, chamada por `/pr`).
-- Depois do merge: `git switch main && git pull`, apague a branch local e marque a spec como `concluída`.
+- A spec é marcada `concluída` (e as pendências resolvidas são movidas) **na branch, antes do PR**: o squash leva isso para a `main`. Depois do merge só sobra `git switch main && git pull` e `git branch -D <branch>` (`-D` porque o git não reconhece squash como merge), com o PR confirmado como `MERGED`.

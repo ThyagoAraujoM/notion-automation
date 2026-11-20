@@ -55,12 +55,12 @@ pnpm --filter=@notion-automation/api test:e2e     # create → repair → delete
 
 ## Workflows (skills)
 
-Pedido de código segue: `spec-authoring` → `feature` ou `bugfix` → `review` → `/pr` (só o usuário dispara). Artefatos em `docs/workflows/<slug>/`. Problema fora do escopo → `docs/pendencias.md` (rule `pending-fixes`). Visão geral em [docs/workflows/README.md](docs/workflows/README.md).
+Pedido de código segue: `spec-authoring` → `feature` ou `bugfix` → `revisar` → `/pr` (só o usuário dispara). Artefatos em `docs/workflows/<slug>/`. Problema fora do escopo → `docs/pendencias.md` (rule `pending-fixes`). Visão geral em [docs/workflows/README.md](docs/workflows/README.md).
 
 ## Fluxo de trabalho com modelos
 
 - **Principal (executor): Sonnet**, com **advisor Opus** para decisões difíceis (`.claude/settings.json`).
-- Busca no código → subagente `explorador` (Haiku). Tarefas pequenas e mecânicas → `rapido` (Haiku). Implementação planejada → `executor` (Sonnet). Revisão antes do PR → skill `review` (usa o subagente `revisor`, Sonnet).
+- Busca no código → subagente `explorador` (Haiku). Tarefas pequenas e mecânicas → `rapido` (Haiku). Implementação planejada → `executor` (Sonnet). Revisão antes do PR → skill `revisar` (usa o subagente `revisor`, Sonnet).
 - Para planejar algo grande: use plan mode e peça explicitamente para consultar o advisor.
 
 ## Pontos de atenção conhecidos

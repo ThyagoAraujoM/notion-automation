@@ -1,6 +1,6 @@
 ---
-name: review
-description: Revisa a demanda atual antes do PR — roda o portão, delega a revisão do diff ao subagente revisor (contexto isolado), confere os critérios de aceitação da spec e grava docs/workflows/<slug>/review.md com veredito. Use ao terminar uma feature ou bugfix, antes de commitar algo grande, ou quando o usuário pedir revisão (/review).
+name: revisar
+description: Revisa a demanda atual antes do PR — roda o portão, delega a revisão do diff ao subagente revisor (contexto isolado), confere os critérios de aceitação da spec e grava docs/workflows/<slug>/review.md com veredito. Use ao terminar uma feature ou bugfix, antes de commitar algo grande, ou quando o usuário pedir revisão (/revisar).
 argument-hint: "[foco opcional, ex.: segurança, rotas]"
 ---
 

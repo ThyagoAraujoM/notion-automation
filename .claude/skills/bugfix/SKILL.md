@@ -18,7 +18,7 @@ O comportamento atual diverge do esperado ou documentado. Se o "bug" for na verd
 
 - Relato: `$ARGUMENTS` (mensagem de erro, status, passos, dados).
 - Comportamento esperado: docs (`docs/arquitetura.md`, Swagger em `/docs`), spec da feature original em `docs/workflows/`, testes existentes.
-- Comandos: `pnpm lint && pnpm check-types && pnpm test`; `test:e2e` se envolver o Notion.
+- Comandos: `pnpm lint && pnpm check-types && pnpm test`; `test:e2e` se envolver o Notion (só com autorização do usuário: escreve no Notion real, ~5 min).
 
 ## Etapas
 
@@ -29,7 +29,7 @@ O comportamento atual diverge do esperado ou documentado. Se o "bug" for na verd
 5. **Corrija com a menor mudança.** Rode o teste da etapa 3 (agora passa) e o portão completo.
 6. **Procure o mesmo padrão** em outros lugares (mesma função usada em outras rotas, mesmo erro de lógica). Corrija só o que está no escopo; o resto vira `PF-NNN`.
 7. **Atualize docs** se o comportamento documentado estava errado ou se a regra que evita o bug deve virar convenção (ex.: `.nullish()` em body opcional).
-8. **Commit** (`fix: ...`), spec `em revisão`, e chame a skill `review`.
+8. **Commit** (`fix: ...`), spec `em revisão`, e chame a skill `revisar`.
 
 ## Pontos de decisão
 
@@ -46,8 +46,8 @@ O comportamento atual diverge do esperado ou documentado. Se o "bug" for na verd
 
 ## Critério de saída
 
-Defeito corrigido na branch `fix/<slug>`, teste de regressão no lugar, `review` com veredito ✅ ou ⚠️.
+Defeito corrigido na branch `fix/<slug>`, teste de regressão no lugar, `revisar` com veredito ✅ ou ⚠️.
 
 ## Handoff
 
-Informe: pasta da demanda, branch, causa raiz, teste de regressão (arquivo e nome), arquivos alterados, comandos e resultados, `PF-NNN` registrados e próxima rota (`review` → `/pr`).
+Informe: pasta da demanda, branch, causa raiz, teste de regressão (arquivo e nome), arquivos alterados, comandos e resultados, `PF-NNN` registrados e próxima rota (`revisar` → `/pr`).

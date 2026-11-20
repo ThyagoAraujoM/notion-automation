@@ -58,7 +58,7 @@
 - **Na `main`: um commit por pedido**, via PR com **squash merge**. O título do PR (Conventional Commit) vira esse commit.
 - Problema encontrado fora do escopo não entra no diff: vira `PF-NNN` em `docs/pendencias.md`.
 - Push, PR e merge só quando o usuário pedir (skill `pr`, por `/pr`).
-- Regras completas em `.claude/rules/git-workflow.md`; passo a passo nas skills `feature`, `bugfix`, `review` e `pr`.
+- Regras completas em `.claude/rules/git-workflow.md`; passo a passo nas skills `feature`, `bugfix`, `revisar` e `pr`.
 
 ## Testes
 

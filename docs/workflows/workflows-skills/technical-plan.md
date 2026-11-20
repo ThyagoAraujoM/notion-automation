@@ -7,7 +7,7 @@
 Cada workflow vira uma **skill de projeto** (`.claude/skills/<nome>/SKILL.md`): a `description` faz o Claude escolher a skill certa sozinho e `/nome` permite chamar manualmente. Regras que valem em toda sessão (git, pendências) ficam em `.claude/rules/`, que o Claude Code carrega automaticamente. Os templates ficam como arquivos de apoio da `spec-authoring` (só são lidos quando a skill precisa). Os artefatos de cada demanda ficam em `docs/workflows/<slug>/`, versionados com o código.
 
 - `pr` tem `disable-model-invocation: true`: abrir PR é ação externa (publica no GitHub), então só roda quando o usuário digita `/pr`.
-- A revisão continua isolada no subagente `revisor` (contexto próprio, não se convence com o que a sessão principal já pensou); a skill `review` orquestra e grava `review.md`.
+- A revisão continua isolada no subagente `revisor` (contexto próprio, não se convence com o que a sessão principal já pensou); a skill `revisar` orquestra e grava `review.md`.
 
 Alternativas descartadas: uma pasta `workflow/` só com markdown referenciada no CLAUDE.md (funciona, mas o Claude não descobre sozinho qual usar); colocar tudo no CLAUDE.md (incha o contexto de toda sessão; a doc recomenda menos de 200 linhas).
 
@@ -18,7 +18,7 @@ Alternativas descartadas: uma pasta `workflow/` só com markdown referenciada no
 | `.claude/skills/{spec-authoring,feature,bugfix,review,pr}/` | novas skills                                      |
 | `.claude/skills/spec-authoring/templates/*.md`              | templates dos artefatos                           |
 | `.claude/rules/git-workflow.md`, `pending-fixes.md`         | novas regras sempre carregadas                    |
-| `.claude/commands/revisar.md`                               | removido (substituído pela skill `review`)        |
+| `.claude/commands/revisar.md`                               | removido (substituído pela skill `revisar`)       |
 | `.claude/agents/*.md`                                       | apontam para as skills e para o fluxo de branches |
 | `.github/pull_request_template.md`                          | novo                                              |
 | `docs/pendencias.md`, `docs/workflows/README.md`            | novos                                             |
