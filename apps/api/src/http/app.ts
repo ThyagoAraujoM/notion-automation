@@ -13,6 +13,7 @@ import { getDatabaseSchemaRoute } from "./routes/databases/get-database-schema";
 import { yearsRoutes } from "./routes/years";
 
 // Textos de validação do Zod em português (a documentação da API é só em português por ora).
+// Atenção: a configuração é global ao processo (vale para todo schema Zod carregado depois).
 z.config(z.locales.pt());
 
 // Nome em português de onde veio o erro de validação (`validationContext` do Fastify).

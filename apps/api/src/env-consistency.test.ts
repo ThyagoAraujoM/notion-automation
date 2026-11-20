@@ -38,6 +38,22 @@ describe("variáveis de ambiente", () => {
     expect(sorted(runtimeEnv)).toEqual(sorted(server));
   });
 
+  it("cada chave de `runtimeEnv` lê o `process.env` de mesmo nome", () => {
+    const wrong = runtimeEnv.filter(
+      (name) =>
+        !new RegExp(String.raw`^ {4}${name}: process\.env\.${name},`, "m").test(
+          runtimeBlock,
+        ),
+    );
+    expect(wrong).toEqual([]);
+  });
+
+  it("o .env.example não tem variável que o `env` desconhece", () => {
+    expect([...exampleAny].filter((name) => !server.includes(name))).toEqual(
+      [],
+    );
+  });
+
   it("`globalEnv` do turbo.json lista as mesmas variáveis", () => {
     expect(sorted(globalEnv)).toEqual(sorted(server));
   });

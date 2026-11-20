@@ -27,7 +27,7 @@ A API é pensada para o público internacional, e a documentação (Swagger) ser
 
 - **Inglês:** identificadores (variáveis, funções, tipos, arquivos), chaves de JSON, nomes de tabelas/colunas, valores técnicos (`createYear`, `quarter`).
 - **Português:** comentários de código, descrições do Swagger, mensagens de erro/sucesso devolvidas pela API, docs e commits.
-- Mensagem de erro **nunca** mostra identificador técnico cru (`quarter:`, `createYear`): traduza o rótulo na própria mensagem (exemplos: `MissingTemplatesError`, `OperationInProgressError`). Textos de validação do Zod saem em português pelo locale `pt` configurado em `http/app.ts`.
+- Mensagem de erro **nunca** mostra identificador técnico cru (`quarter:`, `createYear`): traduza o rótulo na própria mensagem (exemplos: `MissingTemplatesError`, `OperationInProgressError`). Textos de validação do Zod saem em português pelo locale `pt` configurado em `http/app.ts` (global ao processo; as mensagens do `env`, validado antes disso, ficam em inglês).
 - Mensagens vindas do Notion ou do Fastify (fora do nosso controle) podem aparecer no idioma de origem.
 - Quando houver um segundo idioma, centralize as mensagens num catálogo (i18n) em vez de espalhar `if`s.
 
