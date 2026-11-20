@@ -24,6 +24,7 @@ pedido ─▶ spec-authoring ─▶ feature | bugfix ─▶ revisar ─▶ /pr �
 | ---------------- | ----------------------------------- | ------------------------------------------------------------------- |
 | `spec-authoring` | automático ou `/spec-authoring ...` | escreve `spec.md` e `technical-plan.md`                             |
 | `feature`        | automático ou `/feature ...`        | branch `feat/<slug>`, incrementos com testes, portão, docs, revisão |
+| `feat`           | **só** `/feat ...`                  | atalho para a `feature`                                             |
 | `bugfix`         | automático ou `/bugfix ...`         | branch `fix/<slug>`, teste que reproduz, causa raiz, correção       |
 | `revisar`        | automático ou `/revisar [foco]`     | portão + subagente `revisor` + critérios → `review.md`              |
 | `pr`             | **só** `/pr [--draft]`              | push, PR com o template, orienta o squash merge e a limpeza         |
@@ -36,6 +37,7 @@ Regras sempre carregadas: `.claude/rules/git-workflow.md` (branches, commits, sq
 
 ## Demandas
 
-| Slug                                    | Tipo  | Status    |
-| --------------------------------------- | ----- | --------- |
-| [workflows-skills](./workflows-skills/) | chore | concluída |
+| Slug                                                          | Tipo    | Status       |
+| ------------------------------------------------------------- | ------- | ------------ |
+| [workflows-skills](./workflows-skills/)                       | chore   | concluída    |
+| [log-operacoes-postgres-host](./log-operacoes-postgres-host/) | feature | em andamento |
