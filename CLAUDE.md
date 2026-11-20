@@ -28,6 +28,7 @@ Detalhes (propriedades preenchidas, semanas, `Dia Nº`) em [docs/arquitetura.md]
 ```sh
 pnpm dev                                    # todos os apps (API :4000, Web :3000)
 pnpm dev --filter=@notion-automation/api    # só a API
+pnpm --filter=@notion-automation/api build  # gera apps/api/dist/server.js (tsup); start:local roda com o .env, start usa o ambiente
 pnpm lint && pnpm check-types && pnpm test  # portão de qualidade (ver "Ao terminar uma tarefa")
 pnpm format
 pnpm db:up                                  # sobe o Postgres (Docker); db:down / db:logs

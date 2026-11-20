@@ -174,6 +174,15 @@
 - **Alternativas:** um job por etapa (reinstala as dependências em cada um, sem ganho num repositório pequeno); rodar o E2E (~5 min e escreve no Notion real); `services: postgres` (os testes atuais não usam banco, ver `PF-006`); só hook local (não pega o que escapa da máquina nem protege o PR).
 - **Consequências:** todo PR mostra o check verde ou vermelho. Para bloquear o merge é preciso ativar a branch protection exigindo o check (configuração do GitHub, fora do repositório). Quando o `PF-006` trouxer teste de integração com Postgres, o job ganha um `services:`. **Para novos projetos:** criar o workflow junto com o primeiro teste, e alinhar o Node do CI com o `engines`.
 
+## 019 — Build da API com tsup, um bundle único
+
+- **Data:** 2026-11-20
+- **Status:** aceita
+- **Contexto:** a API só rodava via `tsx` (`PF-005`). O `@notion-automation/env` é TypeScript do workspace (`main: index.ts`), então `tsc` sozinho gera um `dist` que o Node não consegue executar.
+- **Decisão:** `tsup` empacota `src/http/server.ts` em `dist/server.js` (CJS, target node20), com o `@notion-automation/env` dentro do bundle e as demais dependências externas. `build` gera o bundle, `start` roda `node dist/server.js` com as variáveis do ambiente, `start:local` carrega o `.env` da raiz. `engines.node` é `>=20.19`.
+- **Alternativas:** `tsc` com `references` e build do pacote `env` (mais configuração e `dist` do env para publicar); rodar `tsx` em produção (compila em cada start e é dependência de dev); bundlar também o `node_modules` (o Prisma e o `pg` ficam piores de empacotar).
+- **Consequências:** o deploy precisa de `node_modules` de produção (o `prisma generate` do `postinstall` gera o client, que entra no bundle). Não há Dockerfile ainda. **Para novos projetos:** definir o `build` junto com o `engines` e conferir que o `start` não depende de devDependencies.
+
 ## Pendentes
 
 > Itens de backlog foram para [pendencias.md](./pendencias.md) (`PF-NNN`). Aqui ficam só decisões em aberto.

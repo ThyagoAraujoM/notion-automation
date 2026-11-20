@@ -4,6 +4,9 @@
   "description": "Api to make automation for notion",
   "scripts": {
     "dev": "pnpm env:load tsx watch ./src/http/server.ts",
+    "build": "tsup",
+    "start": "node dist/server.js",
+    "start:local": "pnpm env:load node dist/server.js",
     "env:load": "dotenv -e ../../.env --",
     "lint": "eslint . --max-warnings 0",
     "check-types": "tsc --noEmit",
@@ -39,6 +42,7 @@
     "@types/pg": "^8.23.1",
     "eslint": "^9.39.1",
     "prisma": "7.10.1",
+    "tsup": "^9.0.0",
     "tsx": "^4.22.4",
     "typescript": "5.9.2",
     "vitest": "^5.1.1"

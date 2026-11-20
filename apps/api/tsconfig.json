@@ -1,7 +1,6 @@
 {
   "extends": "@notion-automation/typescript-config/base.json",
   "include": ["src/**/*", "@types/*.d.ts"],
-  "baseUrl": ".",
   "compilerOptions": {
     "paths": {
       "@/*": ["./src/*"]
