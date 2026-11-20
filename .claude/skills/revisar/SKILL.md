@@ -25,7 +25,7 @@ Ter um segundo olhar **independente** sobre a mudança antes do PR e deixar regi
 1. **Rode o portão** na raiz: `pnpm lint && pnpm check-types && pnpm test`. Falhou: volte para a skill de origem; não revise código quebrado.
 2. **Delegue a revisão do código ao subagente `revisor`**. Passe: o comando do diff (`git diff main...HEAD`), os arquivos da demanda, o foco extra e o que já foi verificado. **Não** passe a sua conclusão: o valor dele é não estar ancorado no que você pensou.
 3. **Confira os critérios.** Para cada `CAn` da spec, aponte a evidência (teste, comando, arquivo). Critério sem evidência = problema.
-4. **Trate os achados.** Para cada problema do revisor, decida: corrigir agora (commit na branch, rodando o portão de novo), registrar como `PF-NNN` (fora do escopo) ou aceitar com justificativa. Não ignore em silêncio.
+4. **Trate os achados.** Para cada problema do revisor, decida: corrigir agora (**commit novo** na branch, `fix: ...`, sem amend nem fixup, rodando o portão de novo: todo commit vai para a `main` e precisa ser rastreável), registrar como `PF-NNN` (fora do escopo) ou aceitar com justificativa. Não ignore em silêncio.
 5. **Grave `review.md`** em `docs/workflows/<slug>/` a partir do template: veredito, critérios, comandos com resultado, problemas e destino de cada um, riscos residuais.
 6. **Mostre ao usuário** o veredito e os problemas, do mais grave ao menos grave. Pergunte antes de corrigir algo que mude escopo.
 

@@ -52,4 +52,4 @@ PR aberto e registrado na spec; usuário sabe como dar o merge e o que fazer dep
 
 ## Handoff
 
-Informe: link do PR, título (= futuro commit na `main`), checks pendentes e os passos pós-merge.
+Informe: link do PR, título (aparece no commit de merge), checks pendentes e os passos pós-merge.
