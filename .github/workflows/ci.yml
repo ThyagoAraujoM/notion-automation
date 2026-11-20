@@ -1,0 +1,48 @@
+# Portão de qualidade no GitHub: roda os mesmos comandos do "Ao terminar uma tarefa"
+# (CLAUDE.md) num ambiente limpo, a cada PR. Veja docs/convencoes.md#ci.
+name: CI
+
+on:
+  # Todo PR aberto ou atualizado; é este check que a branch protection exige.
+  pull_request:
+  # Também na main, para pegar quebra que escapou do PR (ex.: merge de duas branches).
+  push:
+    branches: [main]
+
+# Um novo push na mesma branch/PR cancela a execução anterior ainda em andamento.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Princípio do menor privilégio: o workflow só precisa ler o código.
+permissions:
+  contents: read
+
+jobs:
+  gate:
+    name: Portão (lint, tipos, testes, build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      # A versão do pnpm vem do campo `packageManager` do package.json (pnpm@9.0.0).
+      - uses: pnpm/action-setup@v4
+
+      # Prisma 7 exige Node >= 20.19; o `engines` (>=18) está desalinhado (PF-005).
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      # `--frozen-lockfile` falha se o pnpm-lock.yaml estiver fora de sincronia com os
+      # package.json. O `postinstall` da API já roda `prisma generate`.
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm lint
+      - run: pnpm check-types
+      # Não precisa de .env, Postgres nem Notion: os testes usam valores falsos e mocks.
+      # O E2E (`test:e2e`, ~5 min no Notion real) fica de fora de propósito.
+      - run: pnpm test
+      # Garante que a landing page (Next.js) compila; ninguém roda o build no dia a dia.
+      - run: pnpm build
