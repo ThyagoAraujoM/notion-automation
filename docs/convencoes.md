@@ -56,7 +56,7 @@
 - Exemplo: `feat: cria trimestres ao gerar o ano`.
 - **Branch por demanda** (`<tipo>/<slug>`, mesmo slug de `docs/workflows/<slug>/`); nunca commit direto na `main`.
 - **Na branch: um commit por incremento** do `technical-plan.md`, cada um com o portão verde (`pnpm lint && pnpm check-types && pnpm test`).
-- **Na `main`: um commit por pedido**, via PR com **squash merge**. O título do PR (Conventional Commit) vira esse commit.
+- **Na `main`: um merge por pedido**, via PR com **merge commit**. Os commits da branch entram um a um (para rastrear qual commit fez cada mudança), então todos precisam de mensagem clara e portão verde; correção da revisão vira commit próprio. Visão resumida: `git log --first-parent --oneline main`.
 - Problema encontrado fora do escopo não entra no diff: vira `PF-NNN` em `docs/pendencias.md`.
 - Push, PR e merge só quando o usuário pedir (skill `pr`, por `/pr`).
 - Regras completas em `.claude/rules/git-workflow.md`; passo a passo nas skills `feature`, `bugfix`, `revisar` e `pr`.

@@ -1,6 +1,6 @@
 ## Resumo
 
-<!-- O que muda e por quê, em 2–3 frases. O título do PR vira o commit na main (squash): use Conventional Commit em português. -->
+<!-- O que muda e por quê, em 2–3 frases. O título do PR aparece no commit de merge: use Conventional Commit em português. -->
 
 **Demanda:** [`docs/workflows/<slug>/`](../docs/workflows/<slug>/) · **Tipo:** feature | bugfix | chore | refactor
 
@@ -31,4 +31,5 @@ pnpm lint && pnpm check-types && pnpm test
 - [ ] Portão verde (`pnpm lint && pnpm check-types && pnpm test`)
 - [ ] `review.md` com veredito ✅ ou ⚠️
 - [ ] Docs, skills e `.env.example` atualizados quando o padrão mudou
-- [ ] Merge por **Squash and merge**
+- [ ] Commits da branch com mensagens claras (todos vão para a main)
+- [ ] Merge por **Create a merge commit**

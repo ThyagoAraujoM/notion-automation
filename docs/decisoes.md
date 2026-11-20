@@ -123,7 +123,7 @@
 ## 013 — Workflows como skills, branch por demanda e squash merge
 
 - **Data:** 2026-11-20
-- **Status:** aceita
+- **Status:** aceita; a parte do squash merge foi substituída por 015
 - **Contexto:** todo commit ia direto na `main` e o processo vivia espalhado no CLAUDE.md. Faltava um caminho repetível de "pedido → código revisado na main" que o Claude seguisse sozinho e que servisse para os próximos projetos.
 - **Decisão:** skills de projeto `spec-authoring`, `feature`, `bugfix`, `revisar` e `pr` (esta só por `/pr`, pois publica no GitHub); artefatos de cada demanda em `docs/workflows/<slug>/` (spec, plano, review, handoff) com templates na `spec-authoring`; rules sempre carregadas em `.claude/rules/` (fluxo git e correções pendentes); `docs/pendencias.md` com IDs `PF-NNN`; branch `<tipo>/<slug>` com um commit por incremento e **squash merge** na `main`. O comando `/revisar` virou a skill `revisar` (não `review`, para não colidir com o `/review` embutido do Claude Code), que continua delegando ao subagente `revisor`.
 - **Alternativas:** pasta `workflow/` só com markdown citada no CLAUDE.md (o Claude não escolhe sozinho qual usar); tudo no CLAUDE.md (incha o contexto de toda sessão); merge commit ou rebase (descartados: o squash mantém "um pedido = um commit" na `main` e deixa a branch livre para commits pequenos); artefatos em `specs/` na raiz (escolhido `docs/workflows/`, junto das outras docs).
@@ -137,6 +137,15 @@
 - **Decisão:** tabela `operation_log` com colunas próprias (ano, operação e status como enums do Postgres, código HTTP, resposta, erro interno, início, fim, duração), gravada pelas rotas via `startOperationLog` em toda requisição que chega ao handler. As tabelas antigas foram copiadas e removidas na mesma migration. Variável `POSTGRES_HOST` com padrão `localhost`.
 - **Alternativas:** gravar dentro do `withYearLock` (camada de service, não conhece o status HTTP); hook `onResponse` do Fastify (logaria todas as rotas e não tem o erro interno); `operation`/`status` como texto livre (enum dá validação no banco); manter as tabelas antigas (o objetivo era uma só).
 - **Consequências:** é a base para o status de operações assíncronas (`PF-001`). A migration foi escrita à mão (o `prisma migrate dev` só apagaria as tabelas antigas); migrations com cópia de dados vão seguir esse padrão: `prisma migrate diff --from-config-datasource --to-schema ... --script`, editar e aplicar com `db:deploy`. A mensagem interna de erros 500 fica gravada no banco: não registrar segredos em mensagens de erro.
+
+## 015 — Merge commit em vez de squash
+
+- **Data:** 2026-11-20
+- **Status:** aceita (substitui a parte de merge da 013)
+- **Contexto:** a 013 escolheu squash merge ("um pedido = um commit na `main`"). Nos PRs #1 e #2 o merge saiu como merge commit, e o usuário preferiu assim: com os commits da branch visíveis na `main`, fica fácil achar em qual commit cada modificação foi feita (`git log`, `git blame`, `git bisect`).
+- **Decisão:** PRs entram na `main` com **merge commit** (padrão do GitHub). Cada commit da branch precisa se sustentar sozinho (portão verde, mensagem clara, sem "wip"/"fixup"); correção de revisão vira commit próprio. Pós-merge: `git branch -d`.
+- **Alternativas:** squash (descartado: perde a granularidade que o usuário quer rastrear); rebase merge (mantém os commits, mas sem o commit de merge que agrupa a demanda e aponta o PR).
+- **Consequências:** histórico da `main` maior; `git log --first-parent --oneline main` dá a visão de uma linha por demanda. Para desfazer uma demanda inteira: `git revert -m 1 <merge>`. Para forçar no GitHub, deixar só "Allow merge commits" nas configurações do repositório.
 
 ## 016 — Fim de linha LF fixado no `.gitattributes`
 
