@@ -4,7 +4,7 @@
 - **Tipo:** chore
 - **Status:** concluída
 - **Branch:** `chore/gitattributes-eol`
-- **PR:** —
+- **PR:** [#4](https://github.com/ThyagoAraujoM/notion-automation/pull/4)
 - **Criada em:** 2026-11-20
 
 ## Objetivo
