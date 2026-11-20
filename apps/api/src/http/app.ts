@@ -16,8 +16,8 @@ import { yearsRoutes } from "./routes/years";
  * no banco. O `server.ts` chama `listen`; os testes usam `app.inject()`.
  */
 export function buildApp(options: FastifyServerOptions = {}) {
-  // O POST /years e o repair são uma única requisição longa (minutos): sem timeout de
-  // conexão nem de requisição no servidor (já é o padrão do Fastify 5; explícito para não regredir).
+  // As operações longas de /years respondem 202 e rodam em segundo plano (http/year-job.ts),
+  // então nenhuma requisição dura minutos. Os timeouts seguem desligados (padrão do Fastify 5).
   const app = fastify({
     connectionTimeout: 0,
     requestTimeout: 0,

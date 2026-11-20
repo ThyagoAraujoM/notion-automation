@@ -40,6 +40,32 @@ model OperationLog {
   @@map("operation_log")
 }
 
+/// Situação de um job de ano: `running` enquanto roda em segundo plano; `succeeded`/`failed` ao terminar.
+enum JobStatus {
+  running
+  succeeded
+  failed
+}
+
+/// Operação de ano aceita com 202 e executada em segundo plano (consultada por GET /years/jobs/:id).
+/// `statusCode` e `result` são o código e o corpo que a rota síncrona daria; `error` é a mensagem interna.
+model YearJob {
+  id         String        @id @default(uuid()) @db.Uuid
+  year       Int
+  operation  OperationType
+  status     JobStatus     @default(running)
+  /// Parâmetros do pedido (ex.: `{ "startToday": true }`)
+  params     Json
+  statusCode Int?          @map("status_code")
+  result     Json?
+  error      String?
+  createdAt  DateTime      @default(now()) @map("created_at")
+  finishedAt DateTime?     @map("finished_at")
+
+  @@index([year, createdAt])
+  @@map("year_job")
+}
+
 /// Trava por ano: existe uma linha enquanto uma operação (createYear, repairYear ou deleteYear)
 /// daquele ano está em andamento. A chave primária garante que só uma operação por ano rode.
 model YearOperationLock {

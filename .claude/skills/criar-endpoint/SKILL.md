@@ -12,6 +12,7 @@ Siga os passos em ordem. Convenções completas em `docs/convencoes.md` (seção
 - Qual **recurso** (plural: `years`, `databases`...) e qual ação? CRUD usa o verbo HTTP (`POST /years`, `DELETE /years/:year`); ação que não é CRUD vira sub-recurso (`POST /years/:year/repair`). Nunca repita o verbo no caminho (`/createYear`).
 - Identificador vai no **path**; opções vão no **body** (POST) ou **query** (GET).
 - Qual nível do Notion é afetado (Ano/Trimestre/Mês/Semana/Dia) e qual variável `*_DATABASE_ID`?
+- A operação pode levar mais que alguns segundos (muitas páginas no Notion)? Então ela **responde 202 e roda em segundo plano** com `startYearJob` (`@/http/year-job`), como as rotas de `/years` (`routes/years/create-year.ts` é o exemplo; ver `docs/arquitetura.md`, Operações em segundo plano). Validações puras e a trava continuam síncronas; o resultado sai em `GET /years/jobs/:jobId`.
 - Se faltar algo essencial, pergunte antes de criar arquivos.
 
 ## 2. Lógica em `apps/api/src/services/`

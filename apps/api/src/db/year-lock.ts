@@ -3,7 +3,10 @@ import { prisma } from "./prisma";
 
 export type YearOperation = "createYear" | "repairYear" | "deleteYear";
 
-/** Passado esse tempo, uma trava é considerada de um processo que morreu e é descartada. */
+/**
+ * Passado esse tempo, uma trava é considerada de um processo que morreu e é descartada.
+ * A trava dura o job inteiro (do 202 ao fim): precisa ser bem maior que o job mais longo (~7 min).
+ */
 export const YEAR_LOCK_TTL_MS = 60 * 60 * 1000;
 
 export type YearLockResult =

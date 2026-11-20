@@ -21,6 +21,12 @@ const routes = [
   },
   {
     method: "GET",
+    path: "/years/jobs/:jobId",
+    body: "",
+    text: "Acompanha a operação em segundo plano",
+  },
+  {
+    method: "GET",
     path: "/databases/:databaseId/schema",
     body: "",
     text: "Mostra a estrutura do database",
@@ -54,8 +60,11 @@ export function Routes() {
         ))}
       </ul>
       <p className="text-muted-foreground text-sm">
-        A documentação Swagger fica em <code className="font-mono">/docs</code>{" "}
-        na API (porta padrão 4000).
+        Criar, reparar e apagar respondem <code className="font-mono">202</code>{" "}
+        na hora e rodam em segundo plano; o andamento sai em{" "}
+        <code className="font-mono">/years/jobs/:jobId</code>. A documentação
+        Swagger fica em <code className="font-mono">/docs</code> na API (porta
+        padrão 4000).
       </p>
     </section>
   );

@@ -31,16 +31,17 @@ HTTP ─▶ src/http/server.ts (listen) ─▶ src/http/app.ts (buildApp) ─▶
           (registra plugins)    (valida com Zod, responde)    (regra de negócio)          (cliente singleton)
 ```
 
-- **`src/http/app.ts`**: `buildApp()` monta o Fastify (error handler, Swagger, rotas) sem abrir porta nem tocar no banco; usado pelo `server.ts` e pelos testes (`app.inject`). O `server.ts` só adiciona o fechamento do Prisma, limpa as travas e chama `listen`.
+- **`src/http/app.ts`**: `buildApp()` monta o Fastify (error handler, Swagger, rotas) sem abrir porta nem tocar no banco; usado pelo `server.ts` e pelos testes (`app.inject`). O `server.ts` só adiciona o fechamento do Prisma, limpa as travas, marca como falhos os jobs interrompidos e chama `listen`.
 - **Rotas** (`src/http/routes/<recurso>/`): só HTTP — schema Zod, status code, formato da resposta. Uma pasta por recurso REST (`years/`, `databases/`) com `index.ts` registrando as rotas do recurso.
-  - **`src/http/schemas/common.ts`**: schemas Zod repetidos (`errorResponse`, `yearParams`, `flagSchema`, `levelCounts`).
+  - **`src/http/schemas/common.ts`**: schemas Zod repetidos (`errorResponse`, `yearParams`, `flagSchema`, `levelCounts`, `yearOperation`, `jobAccepted`).
   - **`src/http/errors.ts`**: `toHttpError` traduz erros de domínio em 400/404/409/422/504, limitado aos status que a rota declara.
+  - **`src/http/year-job.ts`**: `startYearJob` (trava, grava o job e roda a operação em segundo plano), `failureOutcome`, `acceptedBody` e `settleYearJobs` (testes). Ver [Operações em segundo plano](#operações-em-segundo-plano-jobs).
 - **services** (`src/services/`): casos de uso (regra de negócio). Não conhece Fastify.
   - **`services/shared/`**: peças reutilizadas por mais de um caso de uso e que fazem I/O no Notion — `errors.ts` (`YearNotFoundError`, `YearAlreadyExistsError`), `year-pages.ts` (propriedades de cada nível, `createPage`, `prepareTemplates`, `trashPages`) e `year-hierarchy.ts` (`queryChildrenOf`, `collectYearHierarchy`: trimestres → meses → semanas → dias de um ano). Se duas funções de `services/` precisam do mesmo código, ele vai para cá.
 - **utils** (`src/utils/`): lógica pura, sem I/O (`routine-calendar.ts` = calendário, com testes em `routine-calendar.test.ts`; `notion-pages.ts` = `normId`, `uniqueById`, `indexBy`, `matchNumber`).
 - **scripts** (`src/scripts/`): programas de linha de comando, fora da API (hoje: `e2e-routine.ts`, ver [convencoes.md](./convencoes.md#testes)). Chamam os services direto.
 - **integrations** (`src/integrations/notion/`): cliente e helpers do Notion.
-- **db** (`src/db/`): client Prisma, trava por ano (`year-lock.ts`) e log de operações (`operation-log.ts`).
+- **db** (`src/db/`): client Prisma, trava por ano (`year-lock.ts`), jobs (`year-job.ts`) e log de operações (`operation-log.ts`).
 - **env** (`@notion-automation/env`): única porta de entrada para `process.env`.
 
 ## Portas
@@ -56,9 +57,10 @@ Ambos carregam o `.env` da raiz via `dotenv -e ../../.env`.
 
 | Método | Rota                            | Arquivo                                   | O que faz                                                                                                               |
 | ------ | ------------------------------- | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| POST   | `/years`                        | `routes/years/create-year.ts`             | Cria a rotina anual (Ano → Dias). Body `{ year?, startToday? }`; 201, 409 se o ano já existe                            |
-| POST   | `/years/:year/repair`           | `routes/years/repair-year.ts`             | Repara um ano existente (cria o que falta, religa pais errados). Body `{ startToday? }`; 200, 404 se o ano não existe   |
-| DELETE | `/years/:year`                  | `routes/years/delete-year.ts`             | Manda para a lixeira do Notion o ano e todos os trimestres, meses, semanas e dias; 404 se o ano não existe              |
+| POST   | `/years`                        | `routes/years/create-year.ts`             | Cria a rotina anual (Ano → Dias) em segundo plano. Body `{ year?, startToday? }`; **202** + `jobId`                     |
+| POST   | `/years/:year/repair`           | `routes/years/repair-year.ts`             | Repara um ano existente (cria o que falta, religa pais errados) em segundo plano. Body `{ startToday? }`; **202**       |
+| DELETE | `/years/:year`                  | `routes/years/delete-year.ts`             | Manda para a lixeira do Notion o ano e todos os trimestres, meses, semanas e dias, em segundo plano; **202**            |
+| GET    | `/years/jobs/:jobId`            | `routes/years/get-year-job.ts`            | Situação de um job: `running`/`succeeded`/`failed`, `statusCode` e `result` que a operação daria; 404 se não existir    |
 | GET    | `/databases/:databaseId/schema` | `routes/databases/get-database-schema.ts` | Lista data sources e propriedades (id, nome, tipo + destino das relações) de um database; 404 se não existir/sem acesso |
 | GET    | `/docs` (+ `/docs/json`)        | `app.ts` (`@fastify/swagger-ui`)          | Swagger UI / spec OpenAPI gerada dos schemas Zod                                                                        |
 
@@ -80,7 +82,7 @@ Body opcional `{ "year": 2027, "startToday": 0 }` (sem `year` → ano atual). C�
 Fluxo: (1) resolve o ano → (2) consulta o database de anos pelo `Name`; se existir, **409** →
 (3) `buildYearPlan` calcula trimestres/meses/semanas/dias → (4) busca os templates de cada database e valida que existem (senão **422**, sem criar nada) →
 (5–9) cria Ano → Trimestres → Meses → Semanas → Dias, sempre guardando o id do pai para a relação do filho.
-Resposta **201** com a contagem do que foi criado.
+Resultado do job: **201** com a contagem do que foi criado (os 409 e 422 acima também saem no job, não no 202).
 
 | Nível     | Propriedades preenchidas                                    | Relação com o pai        |
 | --------- | ----------------------------------------------------------- | ------------------------ |
@@ -94,14 +96,14 @@ Resposta **201** com a contagem do que foi criado.
 as semanas que ainda têm algum desses dias (mantendo a numeração do ano, ex.: `Semana 46`, e o rótulo completo da semana),
 os meses e trimestres de hoje em diante. Só vale para o **ano atual** (outro ano → **400**). Na criação, uma semana que
 começou no mês anterior liga ao primeiro mês criado; no `repair`, essa semana não é religada (o mês correto está fora do escopo).
-Se o ano já existir, `POST /years` responde 409 (use o reparo).
+Se o ano já existir, o job de `POST /years` termina com 409 (use o reparo).
 
 **Reparo (`POST /years/:year/repair`):** **repara** o ano do path (`services/repair-year.ts`); aceita `startToday` no body.
 O ano precisa existir (senão **404**). Fluxo: busca os trimestres ligados ao ano → os meses ligados a eles → as semanas
 ligadas aos meses; os **dias** são buscados pela propriedade `Data` (dentro do ano). Cada item do calendário é casado por
 número (`Número do Trimestre`, `Nº do mês`, `Semana nº`) ou data, com fallback no nome. O que falta é **criado e vinculado**;
 o que existe mas está ligado ao pai errado (ou a mais de um pai) é **religado** ao pai correto. Nomes e números de páginas
-existentes não são alterados. Resposta **200** com `created` e `relinked` (contagens).
+existentes não são alterados. Resultado do job: **200** com `created` e `relinked` (contagens).
 É idempotente (rodar de novo não duplica) e por isso não faz rollback. Limitação: semanas sem mês, ou trimestres/meses sem
 ligação ao ano, não são alcançáveis pela hierarquia e seriam recriados.
 
@@ -117,9 +119,28 @@ Regras do calendário:
 - Cada semana liga a **um** mês: o do seu primeiro dia dentro do ano.
 - `Dia Nº` é o dia da semana, **Domingo = 1 … Sábado = 7** (padrão que já existia no database).
 - Se algo falhar no meio, as páginas já criadas vão para a lixeira (rollback best-effort), para o ano poder ser gerado de novo.
-- **Timeout por chamada ao Notion:** o client tem `timeoutMs` de 60 s (`NOTION_TIMEOUT_MS` em `integrations/notion/client.ts`). Se uma chamada estourar, `isNotionTimeout` identifica o erro e as rotas respondem **504** ("o Notion está demorando para responder"). No `createYear` o rollback ainda roda (páginas já criadas vão para a lixeira; uma página cuja criação deu timeout pode ter sido criada sem a gente saber — use `repair`); `repair` e `deleteYear` são idempotentes, basta repetir.
+- **Timeout por chamada ao Notion:** o client tem `timeoutMs` de 60 s (`NOTION_TIMEOUT_MS` em `integrations/notion/client.ts`). Se uma chamada estourar, `isNotionTimeout` identifica o erro e o job termina com **504** ("o Notion está demorando para responder"). No `createYear` o rollback ainda roda (páginas já criadas vão para a lixeira; uma página cuja criação deu timeout pode ter sido criada sem a gente saber — use `repair`); `repair` e `deleteYear` são idempotentes, basta repetir.
 - **Tempo estimado** (documentado no Swagger de cada rota): ano completo ~6–7 min para criar, ~3–4 min para apagar; `startToday` proporcional ao que falta (~1 s/página). Medido no E2E (2090): criar 110 páginas ≈ 1 min, reparar 38 ≈ 30 s, apagar 147 ≈ 1 min.
-- Criação **uma página por vez** (`mapSequential`): com template + relação, criar em paralelo fez o Notion mandar páginas para a lixeira (ver decisão 006) e embaralhava a ordem dos filhos na relação do pai. ~430 páginas levam ~6–7 min e a requisição só responde no final; o Fastify roda sem timeout de conexão/requisição, e o cliente também não pode ter.
+- Criação **uma página por vez** (`mapSequential`): com template + relação, criar em paralelo fez o Notion mandar páginas para a lixeira (ver decisão 006) e embaralhava a ordem dos filhos na relação do pai. ~430 páginas levam ~6–7 min; por isso a operação roda em segundo plano (ver abaixo) e a requisição responde 202 na hora.
+
+## Operações em segundo plano (jobs)
+
+`POST /years`, `POST /years/:year/repair` e `DELETE /years/:year` levam de 1 a 7 min. Para o cliente não ficar com a conexão aberta esse tempo todo (proxies e clientes HTTP cortam), elas **respondem 202 na hora** e rodam em segundo plano, no próprio processo da API (decisão 017, `PF-001`).
+
+```
+cliente ── POST /years ──▶ rota: valida (Zod + startToday) ─▶ trava o ano ─▶ grava year_job (running) ─▶ dispara o service SEM await ─▶ 202 { jobId, statusUrl } + Location
+                                                                                                                │
+                                              (event loop do Node, enquanto a API atende outras requisições)   ▼
+                                                                         service termina/falha ─▶ year_job (succeeded|failed, statusCode, result) ─▶ operation_log ─▶ solta a trava
+cliente ── GET /years/jobs/:jobId (polling a cada 5–10 s) ──▶ lê year_job ─▶ 200 { status, statusCode, result }
+```
+
+- **Runner:** `startYearJob` (`src/http/year-job.ts`). Cada rota passa o `run` (chamada ao service) e o `toOutcome`, que converte o resultado ou o erro no **código e corpo que a rota síncrona daria** (`failureOutcome` usa o mesmo `toHttpError`). Esses valores vão para `year_job.status_code`/`result` e para o `operation_log`.
+- **O que continua síncrono** (resposta direta, sem job): 400 do Zod, 400 de `startToday` fora do ano atual (a rota chama `buildPlan`, que é puro, antes de aceitar) e 409 de operação em andamento (a trava é obtida antes do 202). Falha ao gravar o job → 500 e a trava é solta.
+- **O que vai para o job:** tudo que depende do Notion — 409 "ano já existe", 404 "ano não existe", 422 templates, 504 timeout e 500 inesperado (a mensagem interna fica só em `year_job.error` e `operation_log.error`).
+- **Nunca derruba o processo:** a promise do job termina num `.catch` que só loga; falha ao gravar o job ou o log não impede soltar a trava (`finally`).
+- **API reiniciou no meio** (deploy, crash, `tsx watch`): a operação para onde estava. Ao subir, `failInterruptedYearJobs` marca os jobs `running` como `failed` (500, mensagem sugerindo `repair` ou `DELETE`), junto com `clearYearLocks`. Só funciona porque há **uma instância** da API.
+- **Testes:** `settleYearJobs()` espera os jobs em andamento terminarem, sem `setTimeout` (ver [convencoes.md](./convencoes.md#testes)).
 
 ## Banco de dados (PostgreSQL + Prisma)
 
@@ -130,13 +151,14 @@ Regras do calendário:
 - Comandos (em `apps/api`): `db:migrate` (cria/aplica migration em dev), `db:deploy`, `db:studio`.
 - Tabelas:
   - `operation_log`: **uma linha por requisição** de `/years` que chega ao handler, com sucesso ou erro. Colunas: `year`, `operation` (enum `createYear` | `repairYear` | `deleteYear`), `status` (enum `success` | `error`), `status_code`, `response` (JSON enviado ao cliente), `error` (mensagem interna; em 500 é o único lugar onde ela aparece), `started_at`, `finished_at` e `duration_ms`. Índice em `(year, started_at)`. Substituiu `log_create_year` e `log_deleted_year` (dados copiados na migration `20261120210000_operation_log`; nas linhas migradas `duration_ms` é nulo).
+  - `year_job`: **um job por operação aceita** (202). Colunas: `id` (uuid, o `jobId`), `year`, `operation`, `status` (enum `JobStatus`: `running` | `succeeded` | `failed`), `params` (JSON do pedido), `status_code` e `result` (código e corpo que a rota síncrona daria; nulos enquanto roda), `error` (mensagem interna), `created_at`, `finished_at`. Índice em `(year, created_at)`. Acesso em `src/db/year-job.ts`; nunca é limpa automaticamente.
   - `year_operation_lock`: **trava por ano** (`year` é a chave primária, `operation`, `started_at`). Ver abaixo.
-- Gravação: cada rota chama `startOperationLog(request, year, operation)` (`src/http/operation-log.ts`) no início e o `log(statusCode, response, error?)` devolvido antes de cada resposta. Erro de validação do Zod (400 antes do handler) não grava. Se o insert falhar, o erro só vai para o log da API e a resposta não muda.
+- Gravação: cada rota chama `startOperationLog(request, year, operation)` (`src/http/operation-log.ts`) no início; o `log(statusCode, response, error?)` devolvido é chamado no 400/409 síncrono ou, quando a operação é aceita, **no fim do job**, com o código final e a duração total (o 202 em si não grava linha). Erro de validação do Zod (400 antes do handler) não grava. Se o insert falhar, o erro só vai para o log da API e a resposta não muda.
 - Consultar: `pnpm --filter=@notion-automation/api db:studio` ou SQL, ex.: `select year, operation, status, status_code, duration_ms, error from operation_log order by id desc limit 20;`.
 
 ### Trava de operação por ano
 
-`createYear`, `repairYear` e `deleteYear` rodam dentro de `withYearLock(year, operation, fn)` (`services/shared/year-lock.ts`, usado pelas rotas). Ele insere o ano em `year_operation_lock` antes de começar e remove no fim (`finally`). Se já houver uma linha para aquele ano, a operação **não executa** e a rota responde **409** ("já existe uma operação em andamento"). Anos diferentes rodam em paralelo.
+`createYear`, `repairYear` e `deleteYear` só rodam com o ano travado: `acquireYearLock(year, operation)` (`services/shared/year-lock.ts`, chamado pelo `startYearJob`) insere o ano em `year_operation_lock` **antes do 202** e devolve o `release`, que o job chama no fim (`finally`), em qualquer desfecho. Se já houver uma linha para aquele ano, a operação **não executa** e a rota responde **409** na hora ("já existe uma operação em andamento"). Anos diferentes rodam em paralelo.
 
 - A chave primária faz o próprio banco recusar a segunda tentativa, sem corrida entre "checar" e "gravar".
 - Trava presa (processo morreu no meio): ao subir, a API limpa todas as travas (`clearYearLocks`, só há uma instância); além disso, uma trava com mais de 1 h (`YEAR_LOCK_TTL_MS`) é descartada ao tentar travar.

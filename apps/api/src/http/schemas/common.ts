@@ -25,3 +25,19 @@ export const levelCounts = z.object({
   weeks: z.number(),
   days: z.number(),
 });
+
+/** Operações de ano (mesmos nomes do enum `OperationType` do banco). */
+export const yearOperation = z.enum(["createYear", "repairYear", "deleteYear"]);
+
+/** Resposta 202 das operações de ano: o job foi aceito e roda em segundo plano. */
+export const jobAccepted = z.object({
+  success: z.literal(true),
+  message: z.string(),
+  jobId: z.string().describe("Id do job (UUID)."),
+  year: z.number(),
+  operation: yearOperation,
+  status: z.literal("running"),
+  statusUrl: z
+    .string()
+    .describe("Caminho para acompanhar o job (`GET /years/jobs/:jobId`)."),
+});

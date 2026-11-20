@@ -3,7 +3,8 @@ import { buildApp } from "./app";
 
 // Só a especificação OpenAPI: nenhuma rota é executada, mas o Prisma fica de fora mesmo assim.
 vi.mock("@/db/operation-log", () => ({ saveOperationLog: vi.fn() }));
-vi.mock("@/services/shared/year-lock", () => ({ withYearLock: vi.fn() }));
+vi.mock("@/services/shared/year-lock", () => ({ acquireYearLock: vi.fn() }));
+vi.mock("@/db/year-job", () => ({ findYearJob: vi.fn() }));
 
 type Operation = {
   tags?: string[];
@@ -34,6 +35,7 @@ describe("OpenAPI (/docs/json)", () => {
     expect(routes.sort()).toEqual([
       "DELETE /years/{year}",
       "GET /databases/{databaseId}/schema",
+      "GET /years/jobs/{jobId}",
       "POST /years",
       "POST /years/{year}/repair",
     ]);
@@ -43,6 +45,7 @@ describe("OpenAPI (/docs/json)", () => {
     expect(spec.tags.map((t) => t.name)).toEqual(["Rotina", "Database"]);
     expect(spec.paths["/years"]!.post!.tags).toEqual(["Rotina"]);
     expect(spec.paths["/years/{year}"]!.delete!.tags).toEqual(["Rotina"]);
+    expect(spec.paths["/years/jobs/{jobId}"]!.get!.tags).toEqual(["Rotina"]);
   });
 
   it("documenta o body opcional (nullish) com os campos year e startToday", () => {
@@ -54,34 +57,20 @@ describe("OpenAPI (/docs/json)", () => {
     expect(schema).not.toContain("repair");
   });
 
-  it("declara os status de cada rota", () => {
+  it("declara os status de cada rota (202 nas operações de ano)", () => {
     const statuses = (path: string, method: string) =>
       Object.keys(spec.paths[path]![method]!.responses).sort();
 
-    expect(statuses("/years", "post")).toEqual([
-      "201",
-      "400",
-      "409",
-      "422",
-      "500",
-      "504",
-    ]);
-    expect(statuses("/years/{year}/repair", "post")).toEqual([
+    // Operações longas respondem 202 (job em segundo plano); o resultado sai no GET do job
+    const accepted = ["202", "400", "409", "500"];
+    expect(statuses("/years", "post")).toEqual(accepted);
+    expect(statuses("/years/{year}/repair", "post")).toEqual(accepted);
+    expect(statuses("/years/{year}", "delete")).toEqual(accepted);
+    expect(statuses("/years/jobs/{jobId}", "get")).toEqual([
       "200",
       "400",
       "404",
-      "409",
-      "422",
       "500",
-      "504",
-    ]);
-    expect(statuses("/years/{year}", "delete")).toEqual([
-      "200",
-      "400",
-      "404",
-      "409",
-      "500",
-      "504",
     ]);
   });
 });
