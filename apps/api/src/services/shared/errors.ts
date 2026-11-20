@@ -10,7 +10,7 @@ export class YearAlreadyExistsError extends Error {
 export class YearNotFoundError extends Error {
   constructor(year: number) {
     super(
-      `O ano ${year} não existe no database de anos. Crie-o antes (sem repair).`,
+      `O ano ${year} não existe no database de anos. Crie-o antes com POST /years.`,
     );
     this.name = "YearNotFoundError";
   }
