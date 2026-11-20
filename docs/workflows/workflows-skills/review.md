@@ -40,5 +40,5 @@
 
 - Skills e rules são instruções: nada **impede** um commit direto na `main` (`PF-008`, hook `PreToolUse`).
 - O fluxo ainda não rodou de ponta a ponta numa feature de código real; a primeira demanda real vai mostrar ajustes.
-- A `main` local está 7 commits à frente do `origin/main` (rodada anterior, sem push): o PR desta demanda vai incluí-los, a menos que o usuário peça push da `main` antes.
+- Base do PR conferida: `main` local igual ao `origin/main` (`9dd2695`, já enviada pelo usuário), então o PR contém só os commits desta demanda.
 - Repositório no GitHub ainda aceita merge commit e rebase: para forçar squash, o usuário roda `gh repo edit --enable-squash-merge --enable-merge-commit=false --enable-rebase-merge=false --delete-branch-on-merge` (alteração de configuração do repositório, não feita aqui).
