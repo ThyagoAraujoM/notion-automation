@@ -43,3 +43,4 @@ Regras sempre carregadas: `.claude/rules/git-workflow.md` (branches, commits, me
 | [log-operacoes-postgres-host](./log-operacoes-postgres-host/) | feature | concluída |
 | [regra-merge-commit](./regra-merge-commit/)                   | docs    | concluída |
 | [gitattributes-eol](./gitattributes-eol/)                     | chore   | concluída |
+| [years-jobs-assincronos](./years-jobs-assincronos/)           | feature | concluída |

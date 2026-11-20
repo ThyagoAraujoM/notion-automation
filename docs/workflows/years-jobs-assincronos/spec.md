@@ -2,7 +2,7 @@
 
 - **Slug:** `years-jobs-assincronos`
 - **Tipo:** feature
-- **Status:** em revisão
+- **Status:** concluída
 - **Branch:** `feat/years-jobs-assincronos`
 - **PR:** —
 - **Criada em:** 2026-11-20
