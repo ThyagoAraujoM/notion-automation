@@ -47,7 +47,8 @@ pnpm --filter=@notion-automation/api test:e2e     # create → repair → delete
 ## Regras essenciais
 
 - **Nunca** leia, exiba ou commite o `.env`.
-- `process.env` só via `@notion-automation/env`; variável nova vai em `server` **e** `runtimeEnv` de `packages/env/index.ts` **e** em `globalEnv` do `turbo.json`.
+- `process.env` só via `@notion-automation/env` (o lint falha se não for); variável nova vai em `server` **e** `runtimeEnv` de `packages/env/index.ts`, em `globalEnv` do `turbo.json` **e** no `.env.example` (o teste `env-consistency` confere). Use a skill `nova-variavel-env`. Mudança no banco: skill `nova-migration`.
+- Um hook `PreToolUse` (`.claude/hooks/guard.mjs`) bloqueia `git commit` na `main` e a leitura do `.env` por shell; é uma rede de segurança por regex (também barra comandos que só citam o arquivo).
 - As variáveis `*_DATABASE_ID` são os IDs dos databases de cada nível (`YEAR_`, `QUARTER_`, `MONTH_`, `WEEK_`, `DAY_`); `NOTION_TOKEN` é o único token.
 - Rotas REST por recurso: plugin em `apps/api/src/http/routes/<recurso>/`, registrado no `buildApp` (`src/http/app.ts`) e com teste via `app.inject()` ao lado. Regra de negócio fica em `apps/api/src/services/` (integrações em `integrations/`, banco em `db/`, lógica pura em `utils/`). Para criar rota, use a skill `criar-endpoint`.
 - Descrição de rota no Swagger: lista markdown, um parâmetro por linha (``- **`param`**: descrição``) + `.describe()` nos campos Zod. Padrão em [docs/convencoes.md](docs/convencoes.md#rotas-fastify).

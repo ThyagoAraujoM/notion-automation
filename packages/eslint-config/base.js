@@ -22,6 +22,22 @@ export const config = [
     },
   },
   {
+    // Variáveis de ambiente só via `@notion-automation/env`. Exceções (com `off` no eslint.config
+    // do próprio pacote): packages/env, apps/api/prisma.config.ts (CLI do Prisma, fora do `env`)
+    // e apps/web/scripts/dev.mjs (script de dev em .mjs, sem acesso ao pacote TS).
+    rules: {
+      "no-restricted-properties": [
+        "error",
+        {
+          object: "process",
+          property: "env",
+          message:
+            "Use `env` de @notion-automation/env em vez de process.env (docs/convencoes.md).",
+        },
+      ],
+    },
+  },
+  {
     plugins: {
       onlyWarn,
     },
