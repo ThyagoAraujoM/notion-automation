@@ -4,7 +4,7 @@
 - **Tipo:** feature
 - **Status:** concluída
 - **Branch:** `feat/years-jobs-assincronos`
-- **PR:** —
+- **PR:** [#5](https://github.com/ThyagoAraujoM/notion-automation/pull/5)
 - **Criada em:** 2026-11-20
 
 ## Objetivo

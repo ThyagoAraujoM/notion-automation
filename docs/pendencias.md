@@ -22,9 +22,9 @@
 
 ## Resolvidas
 
-| ID     | Data       | Como                                                                                                                                 |
-| ------ | ---------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| PF-001 | 2026-11-20 | criar, reparar e apagar respondem 202 e rodam em segundo plano; `GET /years/jobs/:jobId` (ADR 017), demanda `years-jobs-assincronos` |
-| PF-003 | 2026-11-20 | tabela única `operation_log` com sucesso e erro (ADR 014), demanda `log-operacoes-postgres-host`                                     |
-| PF-004 | 2026-11-20 | variável `POSTGRES_HOST` (padrão `localhost`), demanda `log-operacoes-postgres-host`                                                 |
-| PF-015 | 2026-11-20 | `.gitattributes` com `* text=auto eol=lf` (ADR 016), demanda `gitattributes-eol`                                                     |
+| ID     | Data       | Como                                                                                                                                        |
+| ------ | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| PF-001 | 2026-11-20 | criar, reparar e apagar respondem 202 e rodam em segundo plano; `GET /years/jobs/:jobId` (ADR 017), demanda `years-jobs-assincronos`, PR #5 |
+| PF-003 | 2026-11-20 | tabela única `operation_log` com sucesso e erro (ADR 014), demanda `log-operacoes-postgres-host`                                            |
+| PF-004 | 2026-11-20 | variável `POSTGRES_HOST` (padrão `localhost`), demanda `log-operacoes-postgres-host`                                                        |
+| PF-015 | 2026-11-20 | `.gitattributes` com `* text=auto eol=lf` (ADR 016), demanda `gitattributes-eol`                                                            |
