@@ -37,11 +37,22 @@ export type TemplateLevel = "quarter" | "month" | "week" | "day";
 /** Nome do template → id, por nível (o ano usa o template padrão do database). */
 export type Templates = Record<TemplateLevel, Map<string, string>>;
 
+/** Rótulo em português de cada nível, só para as mensagens (as chaves do código seguem em inglês). */
+const TEMPLATE_LEVEL_LABEL: Record<TemplateLevel, string> = {
+  quarter: "trimestre",
+  month: "mês",
+  week: "semana",
+  day: "dia",
+};
+
 export class MissingTemplatesError extends Error {
   constructor(public readonly missing: Record<TemplateLevel, string[]>) {
     const detail = Object.entries(missing)
       .filter(([, names]) => names.length > 0)
-      .map(([level, names]) => `${level}: ${names.join(", ")}`)
+      .map(
+        ([level, names]) =>
+          `${TEMPLATE_LEVEL_LABEL[level as TemplateLevel]}: ${names.join(", ")}`,
+      )
       .join(" | ");
     super(`Templates não encontrados no Notion (${detail}).`);
     this.name = "MissingTemplatesError";

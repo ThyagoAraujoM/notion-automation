@@ -91,7 +91,7 @@ describe("templateById e MissingTemplatesError", () => {
 
   it("lança MissingTemplatesError com o nível e o nome", () => {
     expect(() => templateById(templates, "week", "Semana 54")).toThrow(
-      "Templates não encontrados no Notion (week: Semana 54).",
+      "Templates não encontrados no Notion (semana: Semana 54).",
     );
   });
 
@@ -103,7 +103,7 @@ describe("templateById e MissingTemplatesError", () => {
       day: [],
     });
     expect(error.message).toBe(
-      "Templates não encontrados no Notion (month: Março | week: Semana 53, Semana 54).",
+      "Templates não encontrados no Notion (mês: Março | semana: Semana 53, Semana 54).",
     );
   });
 });

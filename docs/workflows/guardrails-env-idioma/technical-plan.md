@@ -27,7 +27,7 @@ Contrato público: só o **texto** de `message` muda; chaves e status HTTP iguai
 | --- | --------------------------------------------- | -------------------------------------------------------------- | --------- | ----------------------------------- | ------ |
 | 1   | PF-008: hook guard                            | `node --test` do guard                                         | CA1–CA3   | casos de bloqueio/permissão passam  | ✅     |
 | 2   | PF-009: lint + teste de consistência + skills | teste de consistência; lint falha com `process.env` de exemplo | CA4–CA6   | portão verde                        | ✅     |
-| 3   | PF-011: mensagens em português + política     | testes de mensagem (helpers, lock, validação)                  | CA7, CA8  | portão verde, docs/ADRs atualizados | ⬜     |
+| 3   | PF-011: mensagens em português + política     | testes de mensagem (helpers, lock, validação)                  | CA7, CA8  | portão verde, docs/ADRs atualizados | ✅     |
 
 ## Validação
 

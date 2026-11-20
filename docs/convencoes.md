@@ -21,6 +21,16 @@
 | Arquivo em `services/`, `utils/`, `db/`, `integrations/` | kebab-case                    | `services/create-year.ts`                    |
 | Variável de ambiente                                     | SCREAMING_SNAKE_CASE          | `PORT_BACKEND`                               |
 
+## Idioma
+
+A API é pensada para o público internacional, e a documentação (Swagger) será multilíngue no futuro; hoje só existe em português (ADR 021).
+
+- **Inglês:** identificadores (variáveis, funções, tipos, arquivos), chaves de JSON, nomes de tabelas/colunas, valores técnicos (`createYear`, `quarter`).
+- **Português:** comentários de código, descrições do Swagger, mensagens de erro/sucesso devolvidas pela API, docs e commits.
+- Mensagem de erro **nunca** mostra identificador técnico cru (`quarter:`, `createYear`): traduza o rótulo na própria mensagem (exemplos: `MissingTemplatesError`, `OperationInProgressError`). Textos de validação do Zod saem em português pelo locale `pt` configurado em `http/app.ts`.
+- Mensagens vindas do Notion ou do Fastify (fora do nosso controle) podem aparecer no idioma de origem.
+- Quando houver um segundo idioma, centralize as mensagens num catálogo (i18n) em vez de espalhar `if`s.
+
 ## Ao terminar uma tarefa (portão de qualidade)
 
 - **Quem roda:** quem altera código — os subagentes `executor` e `rapido` e a sessão principal quando edita arquivos. Quem só lê (`explorador`, `revisor`) não roda.
@@ -54,7 +64,8 @@
 ## Variáveis de ambiente
 
 - Nunca acesse `process.env` direto; importe `env` de `@notion-automation/env`.
-- Variável nova → adicione em **`server`** e em **`runtimeEnv`** de `packages/env/index.ts`.
+- O lint falha em `process.env` fora do `packages/env` (exceções: `apps/api/prisma.config.ts` e `apps/web/scripts/dev.mjs`, com `off` no `eslint.config` de cada um).
+- Variável nova → adicione em **`server`** e em **`runtimeEnv`** de `packages/env/index.ts`, em `globalEnv` do `turbo.json` e no `.env.example`; o teste `apps/api/src/env-consistency.test.ts` confere as quatro listas. Passo a passo: skill `nova-variavel-env`.
 - Nunca leia, exiba ou commite o `.env`.
 
 ## Commits

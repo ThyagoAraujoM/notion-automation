@@ -2,7 +2,7 @@
 
 - **Slug:** `guardrails-env-idioma`
 - **Tipo:** chore
-- **Status:** em andamento
+- **Status:** em revisão
 - **Branch:** `chore/guardrails-env-idioma`
 - **PR:** —
 - **Criada em:** 2026-11-20
@@ -20,14 +20,14 @@ Resolver `PF-008`, `PF-009` e `PF-011` numa demanda só (três incrementos): tro
 
 ## Critérios de aceitação
 
-- [ ] **CA1** — Hook `PreToolUse` (Bash e PowerShell) bloqueia `git commit` quando a branch atual é `main`, em qualquer forma (`git -C x commit`).
-- [ ] **CA2** — O mesmo hook bloqueia comandos que leem `.env` e `.env.*`, mas permite `.env.example`, `process.env` e `packages/env`.
-- [ ] **CA3** — O hook falha aberto (exit 0) com entrada inválida; bloqueio é exit 2 com mensagem em stderr. Há teste automatizado.
-- [ ] **CA4** — `process.env` fora de `packages/env/index.ts` (e das exceções `apps/api/prisma.config.ts`, `apps/web/scripts/dev.mjs`) faz o `pnpm lint` falhar.
-- [ ] **CA5** — Teste em `apps/api` falha se uma variável estiver em `server`/`runtimeEnv`/`globalEnv`/`.env.example` e faltar em outro.
-- [ ] **CA6** — Skills `nova-variavel-env` e `nova-migration` existem e estão citadas no CLAUDE.md.
-- [ ] **CA7** — Mensagens de erro da API saem inteiras em português: 422 de templates (`trimestre`, `mês`, `semana`, `dia`), trava (`criação do ano`...), validação (rótulos e textos do Zod via locale `pt`). Chaves JSON e identificadores seguem em inglês.
-- [ ] **CA8** — Política de idioma em `docs/convencoes.md` e ADR; `PF-008`, `PF-009`, `PF-011` em "Resolvidas".
+- [x] **CA1** — Hook `PreToolUse` (Bash e PowerShell) bloqueia `git commit` quando a branch atual é `main`, em qualquer forma (`git -C x commit`).
+- [x] **CA2** — O mesmo hook bloqueia comandos que leem `.env` e `.env.*`, mas permite `.env.example`, `process.env` e `packages/env`.
+- [x] **CA3** — O hook falha aberto (exit 0) com entrada inválida; bloqueio é exit 2 com mensagem em stderr. Há teste automatizado.
+- [x] **CA4** — `process.env` fora de `packages/env/index.ts` (e das exceções `apps/api/prisma.config.ts`, `apps/web/scripts/dev.mjs`) faz o `pnpm lint` falhar.
+- [x] **CA5** — Teste em `apps/api` falha se uma variável estiver em `server`/`runtimeEnv`/`globalEnv`/`.env.example` e faltar em outro.
+- [x] **CA6** — Skills `nova-variavel-env` e `nova-migration` existem e estão citadas no CLAUDE.md.
+- [x] **CA7** — Mensagens de erro da API saem inteiras em português: 422 de templates (`trimestre`, `mês`, `semana`, `dia`), trava (`criação do ano`...), validação (rótulos e textos do Zod via locale `pt`). Chaves JSON e identificadores seguem em inglês.
+- [x] **CA8** — Política de idioma em `docs/convencoes.md` e ADR; `PF-008`, `PF-009`, `PF-011` em "Resolvidas".
 
 ## Fora de escopo
 

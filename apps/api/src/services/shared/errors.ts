@@ -16,10 +16,17 @@ export class YearNotFoundError extends Error {
   }
 }
 
+/** Nome legível da operação que segura a trava (o valor guardado no banco é o identificador em inglês). */
+const OPERATION_LABEL: Record<string, string> = {
+  createYear: "criação do ano",
+  repairYear: "reparo do ano",
+  deleteYear: "exclusão do ano",
+};
+
 export class OperationInProgressError extends Error {
   constructor(year: number, heldBy: string) {
     super(
-      `Já existe uma operação (${heldBy}) em andamento para o ano ${year}. Aguarde ela terminar antes de enviar outro pedido.`,
+      `Já existe uma operação (${OPERATION_LABEL[heldBy] ?? heldBy}) em andamento para o ano ${year}. Aguarde ela terminar antes de enviar outro pedido.`,
     );
     this.name = "OperationInProgressError";
   }
