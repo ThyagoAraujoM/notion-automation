@@ -28,13 +28,13 @@ Contratos: respostas HTTP **não mudam**. Muda o banco (tabelas) e entra uma var
 
 ## Incrementos
 
-| #   | Mudança                                                    | Testes previstos                                                                | Critérios     | Pronto quando                               | Status |
-| --- | ---------------------------------------------------------- | ------------------------------------------------------------------------------- | ------------- | ------------------------------------------- | ------ |
-| 1   | Spec, plano e skill `/feat`                                | — (docs); `/feat` aparece no harness                                            | CA1           | arquivos commitados                         | ⬜     |
-| 2   | `POSTGRES_HOST` (env, turbo, prisma.ts, prisma.config)     | check-types; `prisma migrate status` conecta                                    | CA2           | sem `localhost` fixo; portão verde          | ⬜     |
-| 3   | Schema + migration com cópia de dados + `saveOperationLog` | migration aplicada no Postgres local; contagem de linhas antes/depois           | CA3, CA6      | linhas antigas presentes em `operation_log` | ⬜     |
-| 4   | Helper nas rotas + testes de log; remove `save-log.ts`     | `years.test.ts`: log em 201/200, 409, 422, 504, 500 (com `error`), falha do log | CA4, CA5, CA7 | portão verde                                | ⬜     |
-| 5   | Docs, ADR 014, pendências                                  | —                                                                               | CA8           | docs coerentes                              | ⬜     |
+| #   | Mudança                                                    | Testes previstos                                                                | Critérios     | Pronto quando                               | Status       |
+| --- | ---------------------------------------------------------- | ------------------------------------------------------------------------------- | ------------- | ------------------------------------------- | ------------ |
+| 1   | Spec, plano e skill `/feat`                                | — (docs); `/feat` aparece no harness                                            | CA1           | arquivos commitados                         | ✅ `2466f73` |
+| 2   | `POSTGRES_HOST` (env, turbo, prisma.ts, prisma.config)     | check-types; `prisma migrate status` conecta                                    | CA2           | sem `localhost` fixo; portão verde          | ✅           |
+| 3   | Schema + migration com cópia de dados + `saveOperationLog` | migration aplicada no Postgres local; contagem de linhas antes/depois           | CA3, CA6      | linhas antigas presentes em `operation_log` | ⬜           |
+| 4   | Helper nas rotas + testes de log; remove `save-log.ts`     | `years.test.ts`: log em 201/200, 409, 422, 504, 500 (com `error`), falha do log | CA4, CA5, CA7 | portão verde                                | ⬜           |
+| 5   | Docs, ADR 014, pendências                                  | —                                                                               | CA8           | docs coerentes                              | ⬜           |
 
 ## Validação
 
