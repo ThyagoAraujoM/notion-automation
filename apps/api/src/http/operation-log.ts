@@ -36,3 +36,6 @@ export function startOperationLog(
     }).catch((e) => request.log.error(e, "Falha ao gravar operation_log"));
   };
 }
+
+/** Função devolvida por `startOperationLog`: grava a linha quando a operação termina. */
+export type OperationLogger = ReturnType<typeof startOperationLog>;

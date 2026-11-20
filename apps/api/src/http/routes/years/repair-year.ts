@@ -1,13 +1,14 @@
-import { NOTION_SLOW, toHttpError } from "@/http/errors";
+import { NOTION_SLOW } from "@/http/errors";
 import { startOperationLog } from "@/http/operation-log";
 import {
   errorResponse,
   flagSchema,
-  levelCounts,
+  jobAccepted,
   yearParams,
 } from "@/http/schemas/common";
+import { acceptedBody, failureOutcome, startYearJob } from "@/http/year-job";
 import { repairYear } from "@/services/repair-year";
-import { withYearLock } from "@/services/shared/year-lock";
+import { buildPlan } from "@/utils/routine-calendar";
 import { FastifyInstance } from "fastify";
 import { ZodTypeProvider } from "fastify-type-provider-zod";
 import z from "zod";
@@ -19,7 +20,7 @@ export async function repairYearRoute(app: FastifyInstance) {
       schema: {
         tags: ["Rotina"],
         summary:
-          "Repara um ano existente: cria o que falta e religa páginas ligadas ao pai errado",
+          "Repara um ano existente em segundo plano: cria o que falta e religa páginas ligadas ao pai errado",
         description: [
           "**Parâmetros**:",
           "",
@@ -28,16 +29,21 @@ export async function repairYearRoute(app: FastifyInstance) {
           "",
           "Confere trimestres, meses, semanas e dias contra o calendário, cria o que faltar (com template) e religa o que estiver ligado ao pai errado. Nomes e números de páginas existentes não são alterados. É idempotente: pode ser repetido sem duplicar nada.",
           "",
-          "**Respostas**:",
+          "**Respostas** (imediatas):",
           "",
-          "- **`200`**: ano reparado, com a contagem de páginas criadas e religadas.",
+          "- **`202`**: pedido aceito. O reparo roda em segundo plano; acompanhe pelo `statusUrl` (também no header `Location`).",
           "- **`400`**: `year` inválido ou `startToday` usado com um ano que não é o atual.",
-          "- **`404`**: o ano não existe (crie com `POST /years`).",
           "- **`409`**: já há outra operação (criar, reparar ou apagar) em andamento para esse ano.",
-          "- **`422`**: faltam templates no Notion (a resposta lista os nomes); nada é criado.",
-          "- **`504`**: o Notion passou de 60 s para responder uma chamada; basta repetir.",
           "",
-          "**Tempo estimado**: ~1 min só para conferir o ano, mais ~1 s por página criada. Cada chamada ao Notion tem limite de **60 s** (`504` se estourar).",
+          "**Resultado do job** (`GET /years/jobs/:jobId`, campo `statusCode`):",
+          "",
+          "- **`200`**: ano reparado; `result` traz a contagem de páginas criadas e religadas.",
+          "- **`404`**: o ano não existe (crie com `POST /years`).",
+          "- **`422`**: faltam templates no Notion (a mensagem lista os nomes); nada é criado.",
+          "- **`504`**: o Notion passou de 60 s para responder uma chamada; basta repetir.",
+          "- **`500`**: erro inesperado.",
+          "",
+          "**Tempo estimado do job**: ~1 min só para conferir o ano, mais ~1 s por página criada.",
         ].join("\n"),
         params: yearParams,
         body: z
@@ -51,58 +57,66 @@ export async function repairYearRoute(app: FastifyInstance) {
           // Sem body o Fastify entrega `null` (não `undefined`): por isso nullish, e não optional
           .nullish(),
         response: {
-          200: z.object({
-            success: z.literal(true),
-            message: z.string(),
-            year: z.number(),
-            yearPageId: z.string(),
-            created: levelCounts,
-            relinked: levelCounts.omit({ quarters: true }),
-          }),
+          202: jobAccepted,
           400: errorResponse,
-          404: errorResponse,
           409: errorResponse,
-          422: errorResponse,
           500: errorResponse,
-          504: errorResponse,
         },
       },
     },
     async (request, reply) => {
       const { year } = request.params;
       const startToday = request.body?.startToday === 1;
+      const fromToday = startToday ? " (a partir de hoje)" : "";
 
       const log = startOperationLog(request, year, "repairYear");
 
       try {
-        const result = await withYearLock(year, "repairYear", () =>
-          repairYear(year, startToday),
+        // Valida o recorte antes de aceitar (é puro): startToday fora do ano atual → 400 na hora
+        buildPlan(year, startToday);
+
+        const { jobId } = await startYearJob({
+          request,
+          year,
+          operation: "repairYear",
+          params: { startToday },
+          log,
+          run: () => repairYear(year, startToday),
+          toOutcome: (r) =>
+            r.ok
+              ? {
+                  statusCode: 200,
+                  body: {
+                    success: true,
+                    message: `Rotina de ${year}${fromToday} conferida e reparada com sucesso.`,
+                    ...r.value,
+                  },
+                }
+              : failureOutcome(
+                  r.error,
+                  [404, 422, 504],
+                  `${NOTION_SLOW} Tente novamente em instantes.`,
+                  "Erro ao reparar a rotina anual.",
+                ),
+        });
+
+        const { statusUrl, body } = acceptedBody(
+          jobId,
+          year,
+          "repairYear",
+          `Reparo da rotina de ${year}${fromToday} iniciado.`,
         );
-        const body = {
-          success: true as const,
-          message: `Rotina de ${year}${startToday ? " (a partir de hoje)" : ""} conferida e reparada com sucesso.`,
-          ...result,
-        };
-        await log(200, body);
-        return reply.status(200).send(body);
+        return reply.status(202).header("location", statusUrl).send(body);
       } catch (error) {
-        const known = toHttpError(
+        const failure = failureOutcome(
           error,
-          [400, 404, 409, 422, 504],
-          `${NOTION_SLOW} Tente novamente em instantes.`,
+          [400, 409],
+          NOTION_SLOW,
+          "Erro ao reparar a rotina anual.",
         );
-        if (known) {
-          const knownBody = { success: false as const, message: known.message };
-          await log(known.status, knownBody, error);
-          return reply.status(known.status).send(knownBody);
-        }
-        request.log.error(error);
-        const errorBody = {
-          success: false as const,
-          message: "Erro ao reparar a rotina anual.",
-        };
-        await log(500, errorBody, error);
-        return reply.status(500).send(errorBody);
+        if (failure.statusCode === 500) request.log.error(error);
+        await log(failure.statusCode, failure.body, error);
+        return reply.status(failure.statusCode).send(failure.body);
       }
     },
   );
