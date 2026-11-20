@@ -2,7 +2,7 @@
 
 - **Slug:** `ci-github-actions`
 - **Tipo:** chore
-- **Status:** em andamento
+- **Status:** concluída
 - **Branch:** `chore/ci-github-actions`
 - **PR:** —
 - **Criada em:** 2026-11-20
