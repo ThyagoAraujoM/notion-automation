@@ -1,5 +1,5 @@
-import { saveCreateYearLog } from "@/db/save-log";
 import { NOTION_SLOW, toHttpError } from "@/http/errors";
+import { startOperationLog } from "@/http/operation-log";
 import {
   errorResponse,
   flagSchema,
@@ -72,6 +72,8 @@ export async function createYearRoute(app: FastifyInstance) {
       const year = request.body?.year ?? new Date().getFullYear();
       const startToday = request.body?.startToday === 1;
 
+      const log = startOperationLog(request, year, "createYear");
+
       try {
         const result = await withYearLock(year, "createYear", () =>
           createYear(year, startToday),
@@ -81,7 +83,7 @@ export async function createYearRoute(app: FastifyInstance) {
           message: `Rotina de ${year}${startToday ? " (a partir de hoje)" : ""} criada com sucesso.`,
           ...result,
         };
-        await saveCreateYearLog(body).catch((e) => request.log.error(e));
+        await log(201, body);
         return reply.status(201).send(body);
       } catch (error) {
         const known = toHttpError(
@@ -90,14 +92,17 @@ export async function createYearRoute(app: FastifyInstance) {
           `${NOTION_SLOW} O que já tinha sido criado foi enviado para a lixeira; tente novamente em instantes ou use POST /years/${year}/repair para conferir o ano.`,
         );
         if (known) {
-          return reply
-            .status(known.status)
-            .send({ success: false, message: known.message });
+          const knownBody = { success: false as const, message: known.message };
+          await log(known.status, knownBody, error);
+          return reply.status(known.status).send(knownBody);
         }
         request.log.error(error);
-        return reply
-          .status(500)
-          .send({ success: false, message: "Erro ao criar a rotina anual." });
+        const errorBody = {
+          success: false as const,
+          message: "Erro ao criar a rotina anual.",
+        };
+        await log(500, errorBody, error);
+        return reply.status(500).send(errorBody);
       }
     },
   );

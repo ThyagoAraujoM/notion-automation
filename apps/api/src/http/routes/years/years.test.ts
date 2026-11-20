@@ -8,7 +8,7 @@ import {
   it,
   vi,
 } from "vitest";
-import { saveCreateYearLog, saveDeletedYearLog } from "@/db/save-log";
+import { saveOperationLog } from "@/db/operation-log";
 import { buildApp } from "@/http/app";
 import { MissingTemplatesError } from "@/integrations/notion/helpers";
 import { createYear } from "@/services/create-year";
@@ -26,10 +26,7 @@ import { InvalidStartTodayError } from "@/utils/routine-calendar";
 vi.mock("@/services/create-year", () => ({ createYear: vi.fn() }));
 vi.mock("@/services/repair-year", () => ({ repairYear: vi.fn() }));
 vi.mock("@/services/delete-year", () => ({ deleteYear: vi.fn() }));
-vi.mock("@/db/save-log", () => ({
-  saveCreateYearLog: vi.fn(),
-  saveDeletedYearLog: vi.fn(),
-}));
+vi.mock("@/db/operation-log", () => ({ saveOperationLog: vi.fn() }));
 vi.mock("@/services/shared/year-lock", () => ({ withYearLock: vi.fn() }));
 
 const counts = { quarters: 4, months: 12, weeks: 53, days: 365 };
@@ -44,8 +41,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   // Por padrão a trava é obtida e só executa a operação
   vi.mocked(withYearLock).mockImplementation((_year, _op, fn) => fn());
-  vi.mocked(saveCreateYearLog).mockResolvedValue({} as never);
-  vi.mocked(saveDeletedYearLog).mockResolvedValue({} as never);
+  vi.mocked(saveOperationLog).mockResolvedValue({} as never);
 });
 
 describe("POST /years", () => {
@@ -74,7 +70,7 @@ describe("POST /years", () => {
       expect.any(Function),
     );
     expect(createYear).toHaveBeenCalledWith(2027, false);
-    expect(saveCreateYearLog).toHaveBeenCalledOnce();
+    expect(saveOperationLog).toHaveBeenCalledOnce();
   });
 
   it("sem body usa o ano atual e o ano inteiro", async () => {
@@ -156,7 +152,9 @@ describe("POST /years", () => {
 
     expect(res.statusCode).toBe(status);
     expect(res.json()).toEqual({ success: false, message: error.message });
-    expect(saveCreateYearLog).not.toHaveBeenCalled();
+    expect(saveOperationLog).toHaveBeenCalledWith(
+      expect.objectContaining({ status: "error", statusCode: status }),
+    );
   });
 
   it("responde 504 com rollback na mensagem quando o Notion estoura o tempo", async () => {
@@ -187,11 +185,11 @@ describe("POST /years", () => {
       yearPageId: "p",
       created: { years: 1, ...counts },
     });
-    vi.mocked(saveCreateYearLog).mockRejectedValue(new Error("db fora"));
+    vi.mocked(saveOperationLog).mockRejectedValue(new Error("db fora"));
 
     const res = await post({ year: 2027 });
 
-    expect(saveCreateYearLog).toHaveBeenCalledOnce();
+    expect(saveOperationLog).toHaveBeenCalledOnce();
     expect(res.statusCode).toBe(201);
   });
 
@@ -245,7 +243,7 @@ describe("POST /years/:year/repair", () => {
       expect.any(Function),
     );
     expect(repairYear).toHaveBeenCalledWith(2026, false);
-    expect(saveCreateYearLog).toHaveBeenCalledOnce();
+    expect(saveOperationLog).toHaveBeenCalledOnce();
   });
 
   it("repassa startToday: 1", async () => {
@@ -323,11 +321,11 @@ describe("POST /years/:year/repair", () => {
       created: { quarters: 0, months: 0, weeks: 0, days: 0 },
       relinked: { months: 0, weeks: 0, days: 0 },
     });
-    vi.mocked(saveCreateYearLog).mockRejectedValue(new Error("db fora"));
+    vi.mocked(saveOperationLog).mockRejectedValue(new Error("db fora"));
 
     const res = await repair(2026);
 
-    expect(saveCreateYearLog).toHaveBeenCalledOnce();
+    expect(saveOperationLog).toHaveBeenCalledOnce();
     expect(res.statusCode).toBe(200);
   });
 });
@@ -354,7 +352,7 @@ describe("DELETE /years/:year", () => {
       "deleteYear",
       expect.any(Function),
     );
-    expect(saveDeletedYearLog).toHaveBeenCalledOnce();
+    expect(saveOperationLog).toHaveBeenCalledOnce();
   });
 
   it("valida o ano do path (400)", async () => {
@@ -405,11 +403,11 @@ describe("DELETE /years/:year", () => {
       year: 2026,
       deleted: { years: 1, ...counts },
     });
-    vi.mocked(saveDeletedYearLog).mockRejectedValue(new Error("db fora"));
+    vi.mocked(saveOperationLog).mockRejectedValue(new Error("db fora"));
 
     const res = await del(2026);
 
-    expect(saveDeletedYearLog).toHaveBeenCalledOnce();
+    expect(saveOperationLog).toHaveBeenCalledOnce();
     expect(res.statusCode).toBe(200);
   });
 
@@ -420,5 +418,100 @@ describe("DELETE /years/:year", () => {
     });
 
     expect(res.statusCode).toBe(404);
+  });
+});
+
+describe("operation_log", () => {
+  it("grava sucesso com operação, status, código, resposta e duração", async () => {
+    vi.mocked(createYear).mockResolvedValue({
+      year: 2027,
+      yearPageId: "p",
+      created: { years: 1, ...counts },
+    });
+
+    const res = await app.inject({
+      method: "POST",
+      url: "/years",
+      payload: { year: 2027 },
+    });
+
+    expect(saveOperationLog).toHaveBeenCalledOnce();
+    const entry = vi.mocked(saveOperationLog).mock.calls[0]![0];
+    expect(entry).toMatchObject({
+      year: 2027,
+      operation: "createYear",
+      status: "success",
+      statusCode: 201,
+      error: null,
+      response: res.json(),
+    });
+    expect(entry.durationMs).toBeGreaterThanOrEqual(0);
+    expect(entry.finishedAt.getTime()).toBeGreaterThanOrEqual(
+      entry.startedAt.getTime(),
+    );
+  });
+
+  it("grava erro conhecido com o código e a resposta enviada", async () => {
+    vi.mocked(deleteYear).mockRejectedValue(new YearNotFoundError(1990));
+
+    const res = await app.inject({ method: "DELETE", url: "/years/1990" });
+
+    expect(saveOperationLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        year: 1990,
+        operation: "deleteYear",
+        status: "error",
+        statusCode: 404,
+        response: res.json(),
+        error: new YearNotFoundError(1990).message,
+      }),
+    );
+  });
+
+  it("grava 500 com a mensagem interna em error, sem vazá-la na resposta", async () => {
+    vi.mocked(repairYear).mockRejectedValue(new Error("segredo interno"));
+
+    const res = await app.inject({
+      method: "POST",
+      url: "/years/2026/repair",
+    });
+
+    expect(res.body).not.toContain("segredo interno");
+    expect(saveOperationLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        operation: "repairYear",
+        status: "error",
+        statusCode: 500,
+        error: "segredo interno",
+        response: {
+          success: false,
+          message: "Erro ao reparar a rotina anual.",
+        },
+      }),
+    );
+  });
+
+  it("grava a recusa da trava (409) com a operação que tentou rodar", async () => {
+    vi.mocked(withYearLock).mockRejectedValue(
+      new OperationInProgressError(2026, "createYear"),
+    );
+
+    await app.inject({ method: "DELETE", url: "/years/2026" });
+
+    expect(saveOperationLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        operation: "deleteYear",
+        status: "error",
+        statusCode: 409,
+      }),
+    );
+    expect(deleteYear).not.toHaveBeenCalled();
+  });
+
+  it("não grava quando a validação do Zod recusa antes do handler", async () => {
+    const res = await app.inject({ method: "DELETE", url: "/years/abc" });
+
+    expect(res.statusCode).toBe(400);
+    expect(saveOperationLog).not.toHaveBeenCalled();
   });
 });
