@@ -51,7 +51,7 @@ pnpm --filter=@notion-automation/api test:e2e     # create → repair → delete
 - Descrição de rota no Swagger: lista markdown, um parâmetro por linha (``- **`param`**: descrição``) + `.describe()` nos campos Zod. Padrão em [docs/convencoes.md](docs/convencoes.md#rotas-fastify).
 - Lógica pura nova (em `utils/`) vem com teste unitário ao lado (`*.test.ts`, Vitest).
 - Commits: Conventional Commits em português (`feat:`, `fix:`, `chore:`...).
-- **Branch por demanda, squash na `main`.** Nunca commite direto na `main`: cada pedido tem uma branch `<tipo>/<slug>` com um commit por incremento (portão verde) e entra na `main` por PR com squash merge (um pedido = um commit na `main`). Push e PR só quando pedido (`/pr`). Regras em `.claude/rules/git-workflow.md`; detalhes em [docs/convencoes.md](docs/convencoes.md#commits).
+- **Branch por demanda, merge commit na `main`.** Nunca commite direto na `main`: cada pedido tem uma branch `<tipo>/<slug>` com um commit por incremento (portão verde, mensagem clara) e entra na `main` por PR com **merge commit**, que mantém cada commit da branch rastreável (um pedido = um merge). Push e PR só quando pedido (`/pr`). Regras em `.claude/rules/git-workflow.md`; detalhes em [docs/convencoes.md](docs/convencoes.md#commits).
 
 ## Workflows (skills)
 

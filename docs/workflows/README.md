@@ -15,7 +15,7 @@ Os templates ficam em `.claude/skills/spec-authoring/templates/`.
 ## Fluxo
 
 ```
-pedido ─▶ spec-authoring ─▶ feature | bugfix ─▶ revisar ─▶ /pr ─▶ squash merge na main
+pedido ─▶ spec-authoring ─▶ feature | bugfix ─▶ revisar ─▶ /pr ─▶ merge commit na main
           (spec + plano)    (branch, incrementos,  (revisor +   (push + PR,
                              1 commit cada)          review.md)   só por /pr)
 ```
@@ -27,9 +27,9 @@ pedido ─▶ spec-authoring ─▶ feature | bugfix ─▶ revisar ─▶ /pr �
 | `feat`           | **só** `/feat ...`                  | atalho para a `feature`                                             |
 | `bugfix`         | automático ou `/bugfix ...`         | branch `fix/<slug>`, teste que reproduz, causa raiz, correção       |
 | `revisar`        | automático ou `/revisar [foco]`     | portão + subagente `revisor` + critérios → `review.md`              |
-| `pr`             | **só** `/pr [--draft]`              | push, PR com o template, orienta o squash merge e a limpeza         |
+| `pr`             | **só** `/pr [--draft]`              | push, PR com o template, orienta o merge e a limpeza                |
 
-Regras sempre carregadas: `.claude/rules/git-workflow.md` (branches, commits, squash) e `.claude/rules/pending-fixes.md` (registro em `docs/pendencias.md`).
+Regras sempre carregadas: `.claude/rules/git-workflow.md` (branches, commits, merge commit) e `.claude/rules/pending-fixes.md` (registro em `docs/pendencias.md`).
 
 ## Status de uma demanda
 
@@ -37,7 +37,8 @@ Regras sempre carregadas: `.claude/rules/git-workflow.md` (branches, commits, sq
 
 ## Demandas
 
-| Slug                                                          | Tipo    | Status    |
-| ------------------------------------------------------------- | ------- | --------- |
-| [workflows-skills](./workflows-skills/)                       | chore   | concluída |
-| [log-operacoes-postgres-host](./log-operacoes-postgres-host/) | feature | concluída |
+| Slug                                                          | Tipo    | Status       |
+| ------------------------------------------------------------- | ------- | ------------ |
+| [workflows-skills](./workflows-skills/)                       | chore   | concluída    |
+| [log-operacoes-postgres-host](./log-operacoes-postgres-host/) | feature | concluída    |
+| [regra-merge-commit](./regra-merge-commit/)                   | docs    | em andamento |
