@@ -3,9 +3,12 @@
   "version": "1.0.0",
   "description": "Api to make automation for notion",
   "scripts": {
-    "env:load": "dotenv -e ../../.env --",
     "dev": "pnpm env:load tsx watch ./src/http/server.ts",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "env:load": "dotenv -e ../../.env --",
+    "lint": "eslint . --max-warnings 0",
+    "check-types": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "test:e2e": "pnpm env:load tsx ./src/scripts/e2e-routine.ts",
     "db:generate": "prisma generate",
     "db:migrate": "pnpm env:load prisma migrate dev",
@@ -34,7 +37,10 @@
     "@notion-automation/eslint-config": "workspace:*",
     "@notion-automation/typescript-config": "workspace:*",
     "@types/pg": "^8.23.1",
+    "eslint": "^9.39.1",
     "prisma": "7.10.1",
-    "tsx": "^4.22.4"
+    "tsx": "^4.22.4",
+    "typescript": "5.9.2",
+    "vitest": "^5.1.1"
   }
 }

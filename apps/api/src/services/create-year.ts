@@ -50,12 +50,14 @@ export async function createYear(
 
   try {
     // 1. Ano (template padrão do database)
-    const yearId = await create(env.YEAR_TOKEN, { Name: title(plan.name) });
+    const yearId = await create(env.YEAR_DATABASE_ID, {
+      Name: title(plan.name),
+    });
 
     // 2. Trimestres → Ano
     const quarterIds = await mapSequential(plan.quarters, (q) =>
       create(
-        env.QUARTERLY_TOKEN,
+        env.QUARTER_DATABASE_ID,
         quarterProps(q, yearId),
         tpl("quarter", q.name),
       ),
@@ -64,7 +66,7 @@ export async function createYear(
     // 3. Meses → Trimestre
     const monthIds = await mapSequential(plan.months, (m) =>
       create(
-        env.MONTHLY_TOKEN,
+        env.MONTH_DATABASE_ID,
         monthProps(m, quarterIds[m.quarterIndex]!),
         tpl("month", m.name),
       ),
@@ -74,7 +76,7 @@ export async function createYear(
     // monthIndex < 0: a semana começou num mês que não será criado (recorte): liga ao 1º mês
     const weekIds = await mapSequential(plan.weeks, (w) =>
       create(
-        env.WEEKLY_TOKEN,
+        env.WEEK_DATABASE_ID,
         weekProps(w, monthIds[Math.max(w.monthIndex, 0)]!),
         tpl("week", w.name),
       ),
@@ -83,7 +85,7 @@ export async function createYear(
     // 5. Dias → Semana
     await mapSequential(plan.days, (d) =>
       create(
-        env.DAILY_TOKEN,
+        env.DAY_DATABASE_ID,
         dayProps(d, weekIds[d.weekIndex]!),
         tpl("day", d.name),
       ),

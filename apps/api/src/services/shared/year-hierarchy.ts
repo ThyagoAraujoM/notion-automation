@@ -33,15 +33,15 @@ export type YearHierarchy = {
 export async function collectYearHierarchy(
   yearId: string,
 ): Promise<YearHierarchy> {
-  const quarters = await queryChildrenOf(env.QUARTERLY_TOKEN, "Anos", [
+  const quarters = await queryChildrenOf(env.QUARTER_DATABASE_ID, "Anos", [
     { id: yearId },
   ]);
   const months = await queryChildrenOf(
-    env.MONTHLY_TOKEN,
+    env.MONTH_DATABASE_ID,
     "Trimestres",
     quarters,
   );
-  const weeks = await queryChildrenOf(env.WEEKLY_TOKEN, "Meses", months);
-  const days = await queryChildrenOf(env.DAILY_TOKEN, "Semana", weeks);
+  const weeks = await queryChildrenOf(env.WEEK_DATABASE_ID, "Meses", months);
+  const days = await queryChildrenOf(env.DAY_DATABASE_ID, "Semana", weeks);
   return { quarters, months, weeks, days };
 }

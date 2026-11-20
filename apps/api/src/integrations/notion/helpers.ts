@@ -73,10 +73,10 @@ export async function loadTemplates(
   needed: Record<TemplateLevel, string[]>,
 ): Promise<Templates> {
   const [quarter, month, week, day] = await Promise.all([
-    listTemplates(env.QUARTERLY_TOKEN),
-    listTemplates(env.MONTHLY_TOKEN),
-    listTemplates(env.WEEKLY_TOKEN),
-    listTemplates(env.DAILY_TOKEN),
+    listTemplates(env.QUARTER_DATABASE_ID),
+    listTemplates(env.MONTH_DATABASE_ID),
+    listTemplates(env.WEEK_DATABASE_ID),
+    listTemplates(env.DAY_DATABASE_ID),
   ]);
   const templates: Templates = { quarter, month, week, day };
 
@@ -122,7 +122,7 @@ export function templateById(
 /** Id da página do ano com esse `Name`, ou `null` se não existir. */
 export async function findYearPageId(name: string) {
   const res = await notion.dataSources.query({
-    data_source_id: await getDataSourceId(env.YEAR_TOKEN),
+    data_source_id: await getDataSourceId(env.YEAR_DATABASE_ID),
     filter: { property: "Name", title: { equals: name } },
     page_size: 1,
   });

@@ -77,7 +77,7 @@ export async function repairYear(
   };
 
   // Trimestres (já ligados ao ano pela própria consulta)
-  const quarterPages = await queryAll(env.QUARTERLY_TOKEN, {
+  const quarterPages = await queryAll(env.QUARTER_DATABASE_ID, {
     property: "Anos",
     relation: { contains: yearId },
   });
@@ -92,7 +92,7 @@ export async function repairYear(
     if (found) return found.id;
     created.quarters++;
     return createPage(
-      env.QUARTERLY_TOKEN,
+      env.QUARTER_DATABASE_ID,
       quarterProps(q, yearId),
       tpl("quarter", q.name),
     );
@@ -100,7 +100,7 @@ export async function repairYear(
 
   // Meses: tudo que está sob os trimestres do ano
   const monthPages = await queryChildrenOf(
-    env.MONTHLY_TOKEN,
+    env.MONTH_DATABASE_ID,
     "Trimestres",
     quarterPages,
   );
@@ -121,7 +121,7 @@ export async function repairYear(
     }
     created.months++;
     return createPage(
-      env.MONTHLY_TOKEN,
+      env.MONTH_DATABASE_ID,
       monthProps(m, parentId),
       tpl("month", m.name),
     );
@@ -129,7 +129,7 @@ export async function repairYear(
 
   // Semanas: tudo que está sob os meses do ano
   const weekPages = await queryChildrenOf(
-    env.WEEKLY_TOKEN,
+    env.WEEK_DATABASE_ID,
     "Meses",
     monthPages,
   );
@@ -152,14 +152,14 @@ export async function repairYear(
     }
     created.weeks++;
     return createPage(
-      env.WEEKLY_TOKEN,
+      env.WEEK_DATABASE_ID,
       weekProps(w, parentId),
       tpl("week", w.name),
     );
   });
 
   // Dias: localizados pela Data (mesmo que estejam sem semana)
-  const dayPages = await queryAll(env.DAILY_TOKEN, {
+  const dayPages = await queryAll(env.DAY_DATABASE_ID, {
     and: [
       { property: "Data", date: { on_or_after: `${year}-01-01` } },
       { property: "Data", date: { on_or_before: `${year}-12-31` } },
@@ -175,7 +175,7 @@ export async function repairYear(
     }
     created.days++;
     await createPage(
-      env.DAILY_TOKEN,
+      env.DAY_DATABASE_ID,
       dayProps(d, parentId),
       tpl("day", d.name),
     );
