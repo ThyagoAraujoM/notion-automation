@@ -2,10 +2,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { buildApp } from "./app";
 
 // Só a especificação OpenAPI: nenhuma rota é executada, mas o Prisma fica de fora mesmo assim.
-vi.mock("@/db/save-log", () => ({
-  saveCreateYearLog: vi.fn(),
-  saveDeletedYearLog: vi.fn(),
-}));
+vi.mock("@/db/operation-log", () => ({ saveOperationLog: vi.fn() }));
 vi.mock("@/services/shared/year-lock", () => ({ withYearLock: vi.fn() }));
 
 type Operation = {

@@ -129,6 +129,15 @@
 - **Alternativas:** pasta `workflow/` só com markdown citada no CLAUDE.md (o Claude não escolhe sozinho qual usar); tudo no CLAUDE.md (incha o contexto de toda sessão); merge commit ou rebase (descartados: o squash mantém "um pedido = um commit" na `main` e deixa a branch livre para commits pequenos); artefatos em `specs/` na raiz (escolhido `docs/workflows/`, junto das outras docs).
 - **Consequências:** a regra antiga "commit só no final, direto na main" foi substituída. Toda demanda ganha uma pasta de docs. Skills são instruções, não garantia: bloquear commit na `main` exige hook (`PF-008`). Reuso em outros projetos via plugin (`PF-007`).
 
+## 014 — Log único de operações (`operation_log`) e `POSTGRES_HOST`
+
+- **Data:** 2026-11-20
+- **Status:** aceita
+- **Contexto:** os logs só gravavam sucesso, em duas tabelas com uma coluna JSON (`log_create_year`, que também recebia o reparo, e `log_deleted_year`). Falhas (409, 422, 504, 500) não deixavam rastro e não dava para filtrar por ano, operação ou duração. O host do Postgres era `localhost` fixo (`PF-003`, `PF-004`).
+- **Decisão:** tabela `operation_log` com colunas próprias (ano, operação e status como enums do Postgres, código HTTP, resposta, erro interno, início, fim, duração), gravada pelas rotas via `startOperationLog` em toda requisição que chega ao handler. As tabelas antigas foram copiadas e removidas na mesma migration. Variável `POSTGRES_HOST` com padrão `localhost`.
+- **Alternativas:** gravar dentro do `withYearLock` (camada de service, não conhece o status HTTP); hook `onResponse` do Fastify (logaria todas as rotas e não tem o erro interno); `operation`/`status` como texto livre (enum dá validação no banco); manter as tabelas antigas (o objetivo era uma só).
+- **Consequências:** é a base para o status de operações assíncronas (`PF-001`). A migration foi escrita à mão (o `prisma migrate dev` só apagaria as tabelas antigas); migrations com cópia de dados vão seguir esse padrão: `prisma migrate diff --from-config-datasource --to-schema ... --script`, editar e aplicar com `db:deploy`. A mensagem interna de erros 500 fica gravada no banco: não registrar segredos em mensagens de erro.
+
 ## Pendentes
 
 > Itens de backlog foram para [pendencias.md](./pendencias.md) (`PF-NNN`). Aqui ficam só decisões em aberto.
@@ -140,4 +149,4 @@
 - [x] Template `Semana 54` no Notion — criado pelo usuário em 2026-11-20
 - [ ] CI no GitHub Actions — ver `PF-002`
 - [x] Fluxo de branches/PRs e skills por tipo de trabalho — ver 013
-- [ ] Logs com status e erro — ver `PF-003`
+- [x] Logs com status e erro — ver 014

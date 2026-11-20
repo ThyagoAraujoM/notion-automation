@@ -1,5 +1,5 @@
-import { saveDeletedYearLog } from "@/db/save-log";
 import { NOTION_SLOW, toHttpError } from "@/http/errors";
+import { startOperationLog } from "@/http/operation-log";
 import { errorResponse, levelCounts, yearParams } from "@/http/schemas/common";
 import { deleteYear } from "@/services/delete-year";
 import { withYearLock } from "@/services/shared/year-lock";
@@ -51,6 +51,8 @@ export async function deleteYearRoute(app: FastifyInstance) {
     async (request, reply) => {
       const { year } = request.params;
 
+      const log = startOperationLog(request, year, "deleteYear");
+
       try {
         const result = await withYearLock(year, "deleteYear", () =>
           deleteYear(year),
@@ -60,7 +62,7 @@ export async function deleteYearRoute(app: FastifyInstance) {
           message: `Rotina de ${year} enviada para a lixeira do Notion.`,
           ...result,
         };
-        await saveDeletedYearLog(body).catch((e) => request.log.error(e));
+        await log(200, body);
         return reply.status(200).send(body);
       } catch (error) {
         const known = toHttpError(
@@ -69,14 +71,17 @@ export async function deleteYearRoute(app: FastifyInstance) {
           `${NOTION_SLOW} Tente novamente em instantes para apagar o que sobrou.`,
         );
         if (known) {
-          return reply
-            .status(known.status)
-            .send({ success: false, message: known.message });
+          const knownBody = { success: false as const, message: known.message };
+          await log(known.status, knownBody, error);
+          return reply.status(known.status).send(knownBody);
         }
         request.log.error(error);
-        return reply
-          .status(500)
-          .send({ success: false, message: "Erro ao apagar a rotina anual." });
+        const errorBody = {
+          success: false as const,
+          message: "Erro ao apagar a rotina anual.",
+        };
+        await log(500, errorBody, error);
+        return reply.status(500).send(errorBody);
       }
     },
   );

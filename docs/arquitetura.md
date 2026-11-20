@@ -40,7 +40,7 @@ HTTP ─▶ src/http/server.ts (listen) ─▶ src/http/app.ts (buildApp) ─▶
 - **utils** (`src/utils/`): lógica pura, sem I/O (`routine-calendar.ts` = calendário, com testes em `routine-calendar.test.ts`; `notion-pages.ts` = `normId`, `uniqueById`, `indexBy`, `matchNumber`).
 - **scripts** (`src/scripts/`): programas de linha de comando, fora da API (hoje: `e2e-routine.ts`, ver [convencoes.md](./convencoes.md#testes)). Chamam os services direto.
 - **integrations** (`src/integrations/notion/`): cliente e helpers do Notion.
-- **db** (`src/db/`): client Prisma e gravação de logs.
+- **db** (`src/db/`): client Prisma, trava por ano (`year-lock.ts`) e log de operações (`operation-log.ts`).
 - **env** (`@notion-automation/env`): única porta de entrada para `process.env`.
 
 ## Portas
@@ -124,15 +124,15 @@ Regras do calendário:
 ## Banco de dados (PostgreSQL + Prisma)
 
 - Postgres 17 local via Docker (`docker-compose.yml` na raiz): `pnpm db:up` / `pnpm db:down` / `pnpm db:logs`.
-- Variáveis no `.env` da raiz, separadas (sem `DATABASE_URL`): `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` e `POSTGRES_PORT` (padrão `5432`). O docker-compose e a API usam as mesmas; a URL do Prisma CLI é montada em `prisma.config.ts`.
+- Variáveis no `.env` da raiz, separadas (sem `DATABASE_URL`): `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `POSTGRES_HOST` (padrão `localhost`) e `POSTGRES_PORT` (padrão `5432`). O docker-compose usa usuário, senha, banco e porta; a API (`db/prisma.ts`) e a URL do Prisma CLI (`prisma.config.ts`) usam também o host, o que permite apontar para um Postgres fora da máquina.
 - Prisma 7 em `apps/api/prisma/` (`schema.prisma`, `migrations/`) com `prisma.config.ts` e driver adapter `pg`. O client é gerado em `apps/api/src/generated/prisma` (ignorado no git; `pnpm --filter=@notion-automation/api db:generate`, também roda no `postinstall`).
 - Client único em `apps/api/src/db/prisma.ts`; a conexão fecha no hook `onClose` do `server.ts`.
 - Comandos (em `apps/api`): `db:migrate` (cria/aplica migration em dev), `db:deploy`, `db:studio`.
-- Tabelas (uma migration cada), ambas com `id`, `response` (JSON) e `created_at`:
-  - `log_create_year`: resposta de sucesso de `POST /years` (201) e de `POST /years/:year/repair` (200).
-  - `log_deleted_year`: resposta de sucesso de `DELETE /years/:year`.
+- Tabelas:
+  - `operation_log`: **uma linha por requisição** de `/years` que chega ao handler, com sucesso ou erro. Colunas: `year`, `operation` (enum `createYear` | `repairYear` | `deleteYear`), `status` (enum `success` | `error`), `status_code`, `response` (JSON enviado ao cliente), `error` (mensagem interna; em 500 é o único lugar onde ela aparece), `started_at`, `finished_at` e `duration_ms`. Índice em `(year, started_at)`. Substituiu `log_create_year` e `log_deleted_year` (dados copiados na migration `20261120210000_operation_log`; nas linhas migradas `duration_ms` é nulo).
   - `year_operation_lock`: **trava por ano** (`year` é a chave primária, `operation`, `started_at`). Ver abaixo.
-- A gravação do log acontece depois da operação no Notion; se o insert falhar, o erro só é logado e a resposta da rota não muda.
+- Gravação: cada rota chama `startOperationLog(request, year, operation)` (`src/http/operation-log.ts`) no início e o `log(statusCode, response, error?)` devolvido antes de cada resposta. Erro de validação do Zod (400 antes do handler) não grava. Se o insert falhar, o erro só vai para o log da API e a resposta não muda.
+- Consultar: `pnpm --filter=@notion-automation/api db:studio` ou SQL, ex.: `select year, operation, status, status_code, duration_ms, error from operation_log order by id desc limit 20;`.
 
 ### Trava de operação por ano
 

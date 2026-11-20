@@ -1,5 +1,5 @@
-import { saveCreateYearLog } from "@/db/save-log";
 import { NOTION_SLOW, toHttpError } from "@/http/errors";
+import { startOperationLog } from "@/http/operation-log";
 import {
   errorResponse,
   flagSchema,
@@ -72,6 +72,8 @@ export async function repairYearRoute(app: FastifyInstance) {
       const { year } = request.params;
       const startToday = request.body?.startToday === 1;
 
+      const log = startOperationLog(request, year, "repairYear");
+
       try {
         const result = await withYearLock(year, "repairYear", () =>
           repairYear(year, startToday),
@@ -81,7 +83,7 @@ export async function repairYearRoute(app: FastifyInstance) {
           message: `Rotina de ${year}${startToday ? " (a partir de hoje)" : ""} conferida e reparada com sucesso.`,
           ...result,
         };
-        await saveCreateYearLog(body).catch((e) => request.log.error(e));
+        await log(200, body);
         return reply.status(200).send(body);
       } catch (error) {
         const known = toHttpError(
@@ -90,14 +92,17 @@ export async function repairYearRoute(app: FastifyInstance) {
           `${NOTION_SLOW} Tente novamente em instantes.`,
         );
         if (known) {
-          return reply
-            .status(known.status)
-            .send({ success: false, message: known.message });
+          const knownBody = { success: false as const, message: known.message };
+          await log(known.status, knownBody, error);
+          return reply.status(known.status).send(knownBody);
         }
         request.log.error(error);
-        return reply
-          .status(500)
-          .send({ success: false, message: "Erro ao reparar a rotina anual." });
+        const errorBody = {
+          success: false as const,
+          message: "Erro ao reparar a rotina anual.",
+        };
+        await log(500, errorBody, error);
+        return reply.status(500).send(errorBody);
       }
     },
   );

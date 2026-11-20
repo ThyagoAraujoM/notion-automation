@@ -8,22 +8,36 @@ datasource db {
   provider = "postgresql"
 }
 
-/// Resposta (sucesso) devolvida por POST /createYear, junto do momento em que ocorreu.
-model LogCreateYear {
-  id        Int      @id @default(autoincrement())
-  response  Json
-  createdAt DateTime @default(now()) @map("created_at")
-
-  @@map("log_create_year")
+/// Operação de ano registrada no log (mesmos nomes usados pela trava).
+enum OperationType {
+  createYear
+  repairYear
+  deleteYear
 }
 
-/// Resposta (sucesso) devolvida por DELETE /deleteYear, junto do momento em que ocorreu.
-model LogDeletedYear {
-  id        Int      @id @default(autoincrement())
-  response  Json
-  createdAt DateTime @default(now()) @map("created_at")
+/// Resultado da operação: `success` para 2xx, `error` para 4xx/5xx.
+enum OperationStatus {
+  success
+  error
+}
 
-  @@map("log_deleted_year")
+/// Uma linha por requisição de /years que chega ao handler (sucesso ou erro).
+/// `response` é o corpo enviado ao cliente; `error` é a mensagem interna (5xx/inesperado).
+model OperationLog {
+  id         Int             @id @default(autoincrement())
+  year       Int
+  operation  OperationType
+  status     OperationStatus
+  statusCode Int             @map("status_code")
+  response   Json
+  error      String?
+  startedAt  DateTime        @map("started_at")
+  finishedAt DateTime        @default(now()) @map("finished_at")
+  /// Nulo nas linhas migradas das tabelas antigas (duração desconhecida)
+  durationMs Int?            @map("duration_ms")
+
+  @@index([year, startedAt])
+  @@map("operation_log")
 }
 
 /// Trava por ano: existe uma linha enquanto uma operação (createYear, repairYear ou deleteYear)

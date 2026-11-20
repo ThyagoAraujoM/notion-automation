@@ -13,10 +13,7 @@ import { getDatabaseSchema } from "@/services/get-database-schema";
 
 // O buildApp registra também as rotas de /years: mocka log e trava para o Prisma nunca
 // ser tocado (regra de docs/convencoes.md#testes).
-vi.mock("@/db/save-log", () => ({
-  saveCreateYearLog: vi.fn(),
-  saveDeletedYearLog: vi.fn(),
-}));
+vi.mock("@/db/operation-log", () => ({ saveOperationLog: vi.fn() }));
 vi.mock("@/services/shared/year-lock", () => ({ withYearLock: vi.fn() }));
 
 vi.mock("@/services/get-database-schema", () => ({

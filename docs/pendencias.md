@@ -9,8 +9,6 @@
 | ------ | -------------------------------- | -------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
 | PF-001 | retrospectiva (ponto 5)          | `POST /years` é uma requisição síncrona de 6–7 min (`apps/api/src/http/routes/years/create-year.ts`)                 | proxies/front cortam; cliente fica preso              | 202 + job + polling, fila no próprio Postgres (pg-boss ou graphile-worker)                             |
 | PF-002 | retrospectiva (ponto 4.2)        | Não há CI (`.github/workflows/` não existe)                                                                          | portão depende de alguém lembrar de rodar             | GitHub Actions: install, `prisma generate`, lint, tipos, testes, build do web; check obrigatório no PR |
-| PF-003 | retrospectiva (ponto 5)          | Logs só gravam sucesso, em duas tabelas JSON (`apps/api/prisma/schema.prisma`)                                       | falhas não ficam registradas                          | tabela única `year_operation` (ano, tipo, status, início, fim, erro); base para o polling              |
-| PF-004 | retrospectiva (ponto 5)          | `host: "localhost"` fixo em `apps/api/src/db/prisma.ts` e `apps/api/prisma.config.ts`                                | API não roda em Docker/deploy                         | variável `POSTGRES_HOST`                                                                               |
 | PF-005 | retrospectiva (ponto 5)          | API sem `build`/`start` de produção; `engines.node >=18` desalinhado com o Prisma 7                                  | sem caminho de deploy                                 | build com tsc/tsup, script `start`, alinhar `engines`                                                  |
 | PF-006 | testes unitários                 | Services (`create-year`, `repair-year`, `delete-year`) e a trava real (`withYearLock` + Postgres) sem teste unitário | regressão só aparece no E2E (~5 min)                  | testes de service com Notion mockado; teste de integração da trava com Postgres                        |
 | PF-007 | workflows-skills                 | Workflows e templates vivem só neste projeto (`.claude/skills/`)                                                     | próximos projetos começam do zero                     | extrair as partes genéricas para um plugin próprio no GitHub (marketplace)                             |
@@ -24,5 +22,7 @@
 
 ## Resolvidas
 
-| ID  | Data | Como |
-| --- | ---- | ---- |
+| ID     | Data       | Como                                                                                             |
+| ------ | ---------- | ------------------------------------------------------------------------------------------------ |
+| PF-003 | 2026-11-20 | tabela única `operation_log` com sucesso e erro (ADR 014), demanda `log-operacoes-postgres-host` |
+| PF-004 | 2026-11-20 | variável `POSTGRES_HOST` (padrão `localhost`), demanda `log-operacoes-postgres-host`             |
