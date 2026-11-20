@@ -2,7 +2,7 @@
 
 - **Slug:** `gitattributes-eol`
 - **Tipo:** chore
-- **Status:** em andamento
+- **Status:** em revisão
 - **Branch:** `chore/gitattributes-eol`
 - **PR:** —
 - **Criada em:** 2026-11-20
@@ -20,11 +20,11 @@ Acabar com os arquivos marcados como "modificados" só por fim de linha (`PF-015
 
 ## Critérios de aceitação
 
-- [ ] **CA1** — `.gitattributes` na raiz com `* text=auto eol=lf` e binários conhecidos marcados como `binary`.
-- [ ] **CA2** — `git ls-files --eol`: todos os arquivos de texto com `i/lf` e `w/lf`.
-- [ ] **CA3** — Depois de `pnpm format`, `git status` não mostra arquivos modificados sem mudança de conteúdo, e os commits não emitem o aviso de conversão.
-- [ ] **CA4** — Nenhum conteúdo de arquivo muda (só bytes de fim de linha no disco); portão verde.
-- [ ] **CA5** — `PF-015` resolvida; a regra fica registrada para os próximos projetos (convenções/ADR).
+- [x] **CA1** — `.gitattributes` na raiz com `* text=auto eol=lf` e binários conhecidos marcados como `binary`.
+- [x] **CA2** — `git ls-files --eol`: todos os arquivos de texto com `i/lf` e `w/lf`.
+- [x] **CA3** — Depois de `pnpm format`, `git status` não mostra arquivos modificados sem mudança de conteúdo, e os commits não emitem o aviso de conversão.
+- [x] **CA4** — Nenhum conteúdo de arquivo muda (só bytes de fim de linha no disco); portão verde.
+- [x] **CA5** — `PF-015` resolvida; a regra fica registrada para os próximos projetos (convenções/ADR).
 
 ## Fora de escopo
 

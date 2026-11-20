@@ -6,6 +6,7 @@
 
 - TypeScript em tudo. Evite `any`.
 - Formatação: Prettier (`pnpm format`). Lint: ESLint 9 (`pnpm lint`).
+- Fim de linha: **LF** em todo o repositório, fixado pelo `.gitattributes` (`* text=auto eol=lf`), igual ao Prettier. Não mude o `.gitattributes` nem converta arquivos para `CRLF`. Se o `git status` mostrar arquivos modificados com `git diff` vazio, é índice desatualizado: `git add --renormalize .` resolve sem mudar conteúdo.
 - Pacotes internos: escopo `@notion-automation/*`, referenciados como `workspace:*`.
 - Na API, use o alias `@/*` → `apps/api/src/*` para imports internos.
 

@@ -138,6 +138,15 @@
 - **Alternativas:** gravar dentro do `withYearLock` (camada de service, não conhece o status HTTP); hook `onResponse` do Fastify (logaria todas as rotas e não tem o erro interno); `operation`/`status` como texto livre (enum dá validação no banco); manter as tabelas antigas (o objetivo era uma só).
 - **Consequências:** é a base para o status de operações assíncronas (`PF-001`). A migration foi escrita à mão (o `prisma migrate dev` só apagaria as tabelas antigas); migrations com cópia de dados vão seguir esse padrão: `prisma migrate diff --from-config-datasource --to-schema ... --script`, editar e aplicar com `db:deploy`. A mensagem interna de erros 500 fica gravada no banco: não registrar segredos em mensagens de erro.
 
+## 016 — Fim de linha LF fixado no `.gitattributes`
+
+- **Data:** 2026-11-20
+- **Status:** aceita
+- **Contexto:** no Windows o Git usa `core.autocrlf=true` (escreve `CRLF` no disco) e o Prettier grava `LF`. A cada formatação dezenas de arquivos apareciam como modificados sem mudança de conteúdo, e todo commit avisava "LF will be replaced by CRLF" (`PF-015`).
+- **Decisão:** `.gitattributes` com `* text=auto eol=lf` e binários marcados como `binary`. O repositório já estava todo em `LF`; só os arquivos do disco foram convertidos e o índice renormalizado.
+- **Alternativas:** `core.autocrlf false` só na máquina do usuário (não acompanha o repositório); `endOfLine: "crlf"` no Prettier (deixaria o repositório dependente do Windows e quebraria scripts shell).
+- **Consequências:** `git status` só mostra mudança real. Vale para qualquer máquina que clonar. **Para novos projetos:** criar o `.gitattributes` no primeiro commit.
+
 ## Pendentes
 
 > Itens de backlog foram para [pendencias.md](./pendencias.md) (`PF-NNN`). Aqui ficam só decisões em aberto.
