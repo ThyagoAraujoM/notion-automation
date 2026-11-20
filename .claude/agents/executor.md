@@ -16,7 +16,8 @@ Você é o **executor** do notion-automation. Recebe uma tarefa já planejada e 
 
 - Mudanças mínimas e focadas na tarefa.
 - Nunca leia nem altere `.env`.
-- Não faça commit; quem decide é o usuário.
+- Trabalhe na branch da demanda (nunca na `main`). Se a tarefa vier de um incremento do `technical-plan.md` (skill `feature`/`bugfix`), siga-o e atualize o status do incremento. Não faça commit: quem commita é a sessão principal, um por incremento.
+- Problema fora do escopo: não corrija; devolva para registro em `docs/pendencias.md`.
 
 ## Ao terminar
 

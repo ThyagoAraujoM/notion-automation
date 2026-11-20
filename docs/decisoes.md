@@ -120,13 +120,24 @@
 - **Alternativas:** manter `packages/ui` com os componentes shadcn (descartado por ora: só um app consome; volta a fazer sentido se surgir um segundo front).
 - **Consequências:** dark mode do shadcn é por classe (`.dark`), sem alternador ainda.
 
+## 013 — Workflows como skills, branch por demanda e squash merge
+
+- **Data:** 2026-11-20
+- **Status:** aceita
+- **Contexto:** todo commit ia direto na `main` e o processo vivia espalhado no CLAUDE.md. Faltava um caminho repetível de "pedido → código revisado na main" que o Claude seguisse sozinho e que servisse para os próximos projetos.
+- **Decisão:** skills de projeto `spec-authoring`, `feature`, `bugfix`, `revisar` e `pr` (esta só por `/pr`, pois publica no GitHub); artefatos de cada demanda em `docs/workflows/<slug>/` (spec, plano, review, handoff) com templates na `spec-authoring`; rules sempre carregadas em `.claude/rules/` (fluxo git e correções pendentes); `docs/pendencias.md` com IDs `PF-NNN`; branch `<tipo>/<slug>` com um commit por incremento e **squash merge** na `main`. O comando `/revisar` virou a skill `revisar` (não `review`, para não colidir com o `/review` embutido do Claude Code), que continua delegando ao subagente `revisor`.
+- **Alternativas:** pasta `workflow/` só com markdown citada no CLAUDE.md (o Claude não escolhe sozinho qual usar); tudo no CLAUDE.md (incha o contexto de toda sessão); merge commit ou rebase (descartados: o squash mantém "um pedido = um commit" na `main` e deixa a branch livre para commits pequenos); artefatos em `specs/` na raiz (escolhido `docs/workflows/`, junto das outras docs).
+- **Consequências:** a regra antiga "commit só no final, direto na main" foi substituída. Toda demanda ganha uma pasta de docs. Skills são instruções, não garantia: bloquear commit na `main` exige hook (`PF-008`). Reuso em outros projetos via plugin (`PF-007`).
+
 ## Pendentes
+
+> Itens de backlog foram para [pendencias.md](./pendencias.md) (`PF-NNN`). Aqui ficam só decisões em aberto.
 
 - [x] Padrão de nomes para rotas HTTP — REST, ver 009
 - [x] Framework de testes — Vitest (011), com testes de rota (`app.inject`), helpers e builders. Falta: testes unitários dos services (create/repair/delete) com Notion mockado; detecção de página perdida e ordem dos filhos seguem só no E2E
-- [ ] Traduzir o projeto (i18n): mensagens de erro/respostas da API hoje misturam português e rótulos em inglês (ex.: 422 de templates usa `quarter:`, `week:`...)
+- [ ] Traduzir o projeto (i18n) — ver `PF-011`
 - [x] Como relacionar os níveis no Notion — tabela em arquitetura.md
-- [ ] Template `Semana 54` no Notion (necessário em 2040, 2068, 2096)
-- [ ] CI no GitHub Actions (lint + tipos + testes em cada push/PR)
-- [ ] Fluxo de branches/PRs e skills para cada tipo de trabalho (feature, bugfix...): estudar depois
-- [ ] Logs: tabela única `year_operation` com status e erro (hoje só sucesso é gravado)
+- [x] Template `Semana 54` no Notion — criado pelo usuário em 2026-11-20
+- [ ] CI no GitHub Actions — ver `PF-002`
+- [x] Fluxo de branches/PRs e skills por tipo de trabalho — ver 013
+- [ ] Logs com status e erro — ver `PF-003`
