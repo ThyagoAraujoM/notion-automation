@@ -2,7 +2,7 @@
 
 - **Slug:** `log-operacoes-postgres-host`
 - **Tipo:** feature
-- **Status:** em revisão
+- **Status:** concluída
 - **Branch:** `feat/log-operacoes-postgres-host`
 - **PR:** —
 - **Criada em:** 2026-11-20
