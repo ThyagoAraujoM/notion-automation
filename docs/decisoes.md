@@ -165,6 +165,15 @@
 - **Alternativas:** pg-boss ou graphile-worker (sugestão da `PF-001`; fila com retentativa, vários workers e agendamento, nada disso necessário com uma instância só. O `createYear` já faz rollback e repair/delete são idempotentes, e retentar automaticamente poderia duplicar páginas: seria uma dependência a mais sem ganho); reaproveitar `operation_log` como tabela de job (é histórico de operações concluídas, e misturar o "em andamento" exigiria colunas nulas e updates); job só em memória (o status se perde ao reiniciar); SSE/WebSocket (mantêm a conexão longa aberta, que é o que se quer evitar).
 - **Consequências:** contrato das três rotas mudou de 200/201 para 202. Erros que dependem do Notion (ano já existe, ano não existe, templates, timeout) aparecem no status do job, não na resposta do POST/DELETE. Se o processo cair no meio, a operação para sem rollback (o job vira `failed` e a mensagem indica `repair`). **Vale enquanto houver uma instância da API:** com várias, seria preciso um worker separado e uma fila de verdade (aí sim pg-boss). A tabela `year_job` cresce sem limpeza automática.
 
+## 018 — CI no GitHub Actions (um job, mesmo portão do local)
+
+- **Data:** 2026-11-20
+- **Status:** aceita
+- **Contexto:** o portão (`lint`, `check-types`, `test`) dependia de alguém lembrar de rodar, e o fluxo já usa PR com merge commit (`PF-002`).
+- **Decisão:** um workflow com um job que instala com `--frozen-lockfile` e roda `lint`, `check-types`, `test` e `build`, em `pull_request` e `push` na `main`, com `permissions: contents: read`. Node 22 (o Prisma 7 exige >= 20.19). Sem secrets, sem Postgres, sem E2E.
+- **Alternativas:** um job por etapa (reinstala as dependências em cada um, sem ganho num repositório pequeno); rodar o E2E (~5 min e escreve no Notion real); `services: postgres` (os testes atuais não usam banco, ver `PF-006`); só hook local (não pega o que escapa da máquina nem protege o PR).
+- **Consequências:** todo PR mostra o check verde ou vermelho. Para bloquear o merge é preciso ativar a branch protection exigindo o check (configuração do GitHub, fora do repositório). Quando o `PF-006` trouxer teste de integração com Postgres, o job ganha um `services:`. **Para novos projetos:** criar o workflow junto com o primeiro teste, e alinhar o Node do CI com o `engines`.
+
 ## Pendentes
 
 > Itens de backlog foram para [pendencias.md](./pendencias.md) (`PF-NNN`). Aqui ficam só decisões em aberto.
@@ -174,6 +183,6 @@
 - [ ] Traduzir o projeto (i18n) — ver `PF-011`
 - [x] Como relacionar os níveis no Notion — tabela em arquitetura.md
 - [x] Template `Semana 54` no Notion — criado pelo usuário em 2026-11-20
-- [ ] CI no GitHub Actions — ver `PF-002`
+- [x] CI no GitHub Actions — ver 018
 - [x] Fluxo de branches/PRs e skills por tipo de trabalho — ver 013
 - [x] Logs com status e erro — ver 014

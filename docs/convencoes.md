@@ -28,6 +28,13 @@
 - **Pacote novo** no monorepo precisa dos scripts `lint` e `check-types` (e `test`, se tiver testes); sem eles o Turbo **pula o pacote sem avisar**. Confira com `pnpm turbo run lint check-types --dry` (nenhuma tarefa pode aparecer como `<NONEXISTENT>` num pacote com código).
 - **Docs e skills vivas:** se a tarefa mudou um padrão (estrutura de rota, convenção, comando, variável), atualize no mesmo commit a doc e a skill que o descrevem (`docs/`, `.claude/skills/`, `.claude/agents/`, `CLAUDE.md`).
 
+### CI (GitHub Actions)
+
+- `.github/workflows/ci.yml` roda a cada PR e a cada push na `main`: `pnpm install --frozen-lockfile`, `lint`, `check-types`, `test` e `build`, em Node 22. É o mesmo portão local, num ambiente limpo (ADR 018).
+- Não usa secrets nem Postgres: os testes usam valores falsos e mocks. O E2E (`test:e2e`) **não** roda no CI.
+- Após o primeiro run verde, exija o check `Portão (lint, tipos, testes, build)` na branch protection da `main` (Settings → Branches). Sem isso o CI avisa, mas não bloqueia o merge.
+- Mudou um comando do portão? Atualize o `ci.yml` no mesmo commit.
+
 ## Rotas (Fastify)
 
 - Caminhos **REST**: recurso no plural, identificador no path e ações que não são CRUD como sub-recurso (`POST /years`, `POST /years/:year/repair`, `DELETE /years/:year`). O verbo HTTP diz a ação; não repita no caminho (nada de `/createYear`).

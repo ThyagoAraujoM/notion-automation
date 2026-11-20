@@ -40,6 +40,7 @@ pnpm --filter=@notion-automation/api test:e2e     # create → repair → delete
 
 - Quem **altera código** (o `executor`, o `rapido` e a sessão principal quando edita) roda `pnpm lint && pnpm check-types && pnpm test` na raiz antes de dar a tarefa por concluída e relata o resultado. Quem só lê (`explorador`, `revisor`) não roda.
 - Pacote novo no monorepo precisa dos scripts `lint` e `check-types` (senão o Turbo o pula sem avisar). Confira com `pnpm turbo run lint check-types --dry`.
+- O **CI** (`.github/workflows/ci.yml`) roda o mesmo portão + `pnpm build` em todo PR; mudou um comando do portão, atualize o workflow junto.
 - **Docs e skills vivas:** se a tarefa mudou um padrão (estrutura de rota, convenção, comando, variável), atualize no **mesmo commit** a doc e a skill que o descrevem (`docs/`, `.claude/skills/`, `.claude/agents/`, este arquivo).
 
 ## Regras essenciais

@@ -20,11 +20,11 @@ Nenhum contrato de código muda.
 
 ## Incrementos
 
-| #   | Mudança                           | Testes previstos                          | Critérios | Pronto quando  | Status |
-| --- | --------------------------------- | ----------------------------------------- | --------- | -------------- | ------ |
-| 1   | Spec e plano                      | — (docs)                                  | —         | commitados     | ⏳     |
-| 2   | `ci.yml`                          | portão e `pnpm build` locais; YAML válido | CA1–CA3   | portão verde   | ⏳     |
-| 3   | Docs, ADR 018, `PF-002` resolvida | portão                                    | CA4       | docs coerentes | ⏳     |
+| #   | Mudança                           | Testes previstos                          | Critérios | Pronto quando  | Status       |
+| --- | --------------------------------- | ----------------------------------------- | --------- | -------------- | ------------ |
+| 1   | Spec e plano                      | — (docs)                                  | —         | commitados     | ✅ `4f75b15` |
+| 2   | `ci.yml`                          | portão e `pnpm build` locais; YAML válido | CA1–CA3   | portão verde   | ✅ `cfd3b76` |
+| 3   | Docs, ADR 018, `PF-002` resolvida | portão                                    | CA4       | docs coerentes | ✅           |
 
 ## Validação
 
