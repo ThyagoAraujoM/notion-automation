@@ -74,3 +74,20 @@ describe("OpenAPI (/docs/json)", () => {
     ]);
   });
 });
+
+describe("mensagens de validação em português", () => {
+  it("traduz o rótulo e o texto do Zod", async () => {
+    const app = buildApp();
+    const res = await app.inject({
+      method: "POST",
+      url: "/years",
+      payload: { year: "abc" },
+    });
+
+    expect(res.statusCode).toBe(400);
+    const { message } = res.json() as { message: string };
+    expect(message).toMatch(/^corpo\.year: /);
+    expect(message).not.toMatch(/Invalid|expected number|body/);
+    await app.close();
+  });
+});

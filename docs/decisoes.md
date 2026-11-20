@@ -183,13 +183,31 @@
 - **Alternativas:** `tsc` com `references` e build do pacote `env` (mais configuração e `dist` do env para publicar); rodar `tsx` em produção (compila em cada start e é dependência de dev); bundlar também o `node_modules` (o Prisma e o `pg` ficam piores de empacotar).
 - **Consequências:** o deploy precisa de `node_modules` de produção (o `prisma generate` do `postinstall` gera o client, que entra no bundle). Não há Dockerfile ainda. **Para novos projetos:** definir o `build` junto com o `engines` e conferir que o `start` não depende de devDependencies.
 
+## 020 — Guard-rails automáticos: hook PreToolUse e verificação do env
+
+- **Data:** 2026-11-20
+- **Status:** aceita
+- **Contexto:** regras como "nunca commitar na `main`", "nunca ler o `.env`" e "`process.env` só pelo pacote `env`" dependiam de a IA lembrar (`PF-008`, `PF-009`). O `deny` do `settings.json` cobre só as ferramentas Read/Edit, não o shell.
+- **Decisão:** (1) hook `PreToolUse` `.claude/hooks/guard.mjs` (Bash e PowerShell) bloqueia `git commit` na `main` e comandos que citam `.env`/`.env.*` (exceto `.env.example`); lógica em função pura, testada com `node --test` dentro do `pnpm test`. (2) Regra ESLint `no-restricted-properties` proíbe `process.env`, com `off` explícito nas três exceções. (3) Teste `env-consistency` compara `server`, `runtimeEnv`, `globalEnv` e `.env.example` lendo os arquivos como texto.
+- **Alternativas:** hooks do Git (`pre-commit`) só valem localmente e podem ser pulados, e não pegam a leitura do `.env`; checar tudo só no CI avisa tarde; importar o `env` no teste valida o ambiente em vez de comparar listas.
+- **Consequências:** o hook é regex (rede de segurança, não sandbox: não pega ofuscação) e também barra comandos que só mencionam `.env` no texto; para commit use mensagem sem o nome do arquivo. A branch é lida antes de o comando rodar: se o mesmo comando troca de branch (`git switch`/`checkout` antes do `commit`) o hook não decide pela branch atual, e `cd outro && git commit` avalia a branch do diretório original. Mudança em `settings.json` pode exigir reiniciar a sessão. **Para novos projetos:** nascer com o hook, a regra de lint e o teste de consistência do env.
+
+## 021 — Idioma: código em inglês, textos em português por ora
+
+- **Data:** 2026-11-20
+- **Status:** aceita
+- **Contexto:** a API misturava rótulos em inglês nas mensagens em português (`PF-011`). A API é pensada como internacional, com documentação multilíngue no futuro; hoje só há português.
+- **Decisão:** identificadores e chaves de JSON em inglês; comentários, descrições do Swagger e mensagens da API em português. Mensagens não mostram identificadores crus: o rótulo é traduzido na mensagem (nível do template, operação da trava, contexto da validação) e o Zod usa o locale `pt`.
+- **Alternativas:** i18n completo agora (catálogo, negociação via `Accept-Language`) é custo sem segundo idioma; tudo em inglês perde o público atual.
+- **Consequências:** a tradução fica espalhada em poucos mapas (`TEMPLATE_LEVEL_LABEL`, `OPERATION_LABEL`, `VALIDATION_CONTEXT_LABEL`). Quando surgir o segundo idioma, vira catálogo de mensagens. Textos que vêm do Notion/Fastify ficam no idioma de origem.
+
 ## Pendentes
 
 > Itens de backlog foram para [pendencias.md](./pendencias.md) (`PF-NNN`). Aqui ficam só decisões em aberto.
 
 - [x] Padrão de nomes para rotas HTTP — REST, ver 009
 - [x] Framework de testes — Vitest (011), com testes de rota (`app.inject`), helpers e builders. Falta: testes unitários dos services (create/repair/delete) com Notion mockado; detecção de página perdida e ordem dos filhos seguem só no E2E
-- [ ] Traduzir o projeto (i18n) — ver `PF-011`
+- [x] Idioma do código e das mensagens — ver 021 (i18n real só quando houver um segundo idioma)
 - [x] Como relacionar os níveis no Notion — tabela em arquitetura.md
 - [x] Template `Semana 54` no Notion — criado pelo usuário em 2026-11-20
 - [x] CI no GitHub Actions — ver 018

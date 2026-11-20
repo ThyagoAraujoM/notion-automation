@@ -8,8 +8,21 @@ import {
   validatorCompiler,
   ZodTypeProvider,
 } from "fastify-type-provider-zod";
+import { z } from "zod";
 import { getDatabaseSchemaRoute } from "./routes/databases/get-database-schema";
 import { yearsRoutes } from "./routes/years";
+
+// Textos de validação do Zod em português (a documentação da API é só em português por ora).
+// Atenção: a configuração é global ao processo (vale para todo schema Zod carregado depois).
+z.config(z.locales.pt());
+
+// Nome em português de onde veio o erro de validação (`validationContext` do Fastify).
+const VALIDATION_CONTEXT_LABEL: Record<string, string> = {
+  body: "corpo",
+  params: "parâmetro de rota",
+  querystring: "parâmetro de query",
+  headers: "cabeçalho",
+};
 
 /**
  * Monta a aplicação Fastify (error handler, Swagger e rotas) sem abrir porta nem tocar
@@ -35,7 +48,10 @@ export function buildApp(options: FastifyServerOptions = {}) {
         message: error.validation
           .map((issue) => {
             const field = issue.instancePath.replace(/\//g, ".");
-            return `${error.validationContext ?? "request"}${field}: ${issue.message}`;
+            const context =
+              VALIDATION_CONTEXT_LABEL[error.validationContext ?? ""] ??
+              "requisição";
+            return `${context}${field}: ${issue.message}`;
           })
           .join("; "),
       });
