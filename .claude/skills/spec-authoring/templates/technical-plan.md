@@ -32,7 +32,7 @@ Status: ⬜ pendente · 🔄 em andamento · ✅ feito (com o hash do commit)
 
 ## Reversão
 
-Como desfazer se der errado depois do merge (ex.: reverter o commit do squash; migration de volta; dados no Notion).
+Como desfazer se der errado depois do merge (ex.: `git revert -m 1 <merge>` para desfazer a demanda inteira, ou reverter só o commit do incremento; migration de volta; dados no Notion).
 
 ## Acompanhamento
 

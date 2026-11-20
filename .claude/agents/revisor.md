@@ -32,7 +32,7 @@ Você é o **revisor** do notion-automation. Revise apenas o que mudou.
 ### Problemas
 - [alta|média|baixa] caminho:linha — o problema e como corrigir
 
-### Sugestão de título do PR (vira o commit do squash)
+### Sugestão de título do PR (aparece no commit de merge)
 feat: ...
 ```
 
