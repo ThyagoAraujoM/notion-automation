@@ -8,6 +8,8 @@ Monorepo Turborepo + pnpm: `apps/api` (Fastify 5 + Zod 4 + `@notionhq/client` v5
 - [docs/arquitetura.md](docs/arquitetura.md) — módulos, fluxo de requisição, rotas existentes
 - [docs/convencoes.md](docs/convencoes.md) — padrões de código, nomes, testes, commits
 - [docs/decisoes.md](docs/decisoes.md) — por que escolhemos X e não Y
+- [docs/workflows/](docs/workflows/README.md) — demandas (spec, plano, review) e o fluxo das skills de workflow
+- [docs/pendencias.md](docs/pendencias.md) — problemas e melhorias conhecidos (`PF-NNN`)
 
 ## Nomenclatura das páginas criadas no Notion
 
@@ -49,12 +51,16 @@ pnpm --filter=@notion-automation/api test:e2e     # create → repair → delete
 - Descrição de rota no Swagger: lista markdown, um parâmetro por linha (``- **`param`**: descrição``) + `.describe()` nos campos Zod. Padrão em [docs/convencoes.md](docs/convencoes.md#rotas-fastify).
 - Lógica pura nova (em `utils/`) vem com teste unitário ao lado (`*.test.ts`, Vitest).
 - Commits: Conventional Commits em português (`feat:`, `fix:`, `chore:`...).
-- **Commit só no final.** Não commite etapa por etapa: o commit vem **uma vez**, quando **todas as etapas** do pedido (a feature/funcionalidade) terminarem, com lint/tipos/testes ok. Cada pedido concluído = um commit. Se pedidos diferentes ficarem misturados, separe-os em commits distintos (stage parcial). Push só quando pedido. Detalhes em [docs/convencoes.md](docs/convencoes.md#commits).
+- **Branch por demanda, squash na `main`.** Nunca commite direto na `main`: cada pedido tem uma branch `<tipo>/<slug>` com um commit por incremento (portão verde) e entra na `main` por PR com squash merge (um pedido = um commit na `main`). Push e PR só quando pedido (`/pr`). Regras em `.claude/rules/git-workflow.md`; detalhes em [docs/convencoes.md](docs/convencoes.md#commits).
+
+## Workflows (skills)
+
+Pedido de código segue: `spec-authoring` → `feature` ou `bugfix` → `review` → `/pr` (só o usuário dispara). Artefatos em `docs/workflows/<slug>/`. Problema fora do escopo → `docs/pendencias.md` (rule `pending-fixes`). Visão geral em [docs/workflows/README.md](docs/workflows/README.md).
 
 ## Fluxo de trabalho com modelos
 
 - **Principal (executor): Sonnet**, com **advisor Opus** para decisões difíceis (`.claude/settings.json`).
-- Busca no código → subagente `explorador` (Haiku). Tarefas pequenas e mecânicas → `rapido` (Haiku). Implementação planejada → `executor` (Sonnet). Antes de commitar → `/revisar` (`revisor`, Sonnet).
+- Busca no código → subagente `explorador` (Haiku). Tarefas pequenas e mecânicas → `rapido` (Haiku). Implementação planejada → `executor` (Sonnet). Revisão antes do PR → skill `review` (usa o subagente `revisor`, Sonnet).
 - Para planejar algo grande: use plan mode e peça explicitamente para consultar o advisor.
 
 ## Pontos de atenção conhecidos

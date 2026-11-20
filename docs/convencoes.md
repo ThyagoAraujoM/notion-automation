@@ -53,13 +53,12 @@
 
 - Conventional Commits em português: `feat:`, `fix:`, `chore:`, `docs:`, `refactor:`, `test:`.
 - Exemplo: `feat: cria trimestres ao gerar o ano`.
-- **Commit só no final de todas as etapas.** Uma feature/funcionalidade pode ter várias etapas (service, rota, docs...);
-  não se commita a cada etapa. Fluxo: implementar todas as etapas → `pnpm lint && pnpm check-types && pnpm test` → revisar → **um** commit.
-  Só depois de concluir o pedido por inteiro começa-se o próximo (que terá seu próprio commit).
-- Se mudanças de pedidos/funcionalidades diferentes já estiverem misturadas, separe-as em commits distintos
-  (stage parcial do arquivo), na ordem em que foram feitas, cada uma compilando sozinha.
-- Correções descobertas durante uma implementação, mas que são globais (ex.: error handler), vão em commit próprio (`fix:`).
-- Push só quando pedido.
+- **Branch por demanda** (`<tipo>/<slug>`, mesmo slug de `docs/workflows/<slug>/`); nunca commit direto na `main`.
+- **Na branch: um commit por incremento** do `technical-plan.md`, cada um com o portão verde (`pnpm lint && pnpm check-types && pnpm test`).
+- **Na `main`: um commit por pedido**, via PR com **squash merge**. O título do PR (Conventional Commit) vira esse commit.
+- Problema encontrado fora do escopo não entra no diff: vira `PF-NNN` em `docs/pendencias.md`.
+- Push, PR e merge só quando o usuário pedir (skill `pr`, por `/pr`).
+- Regras completas em `.claude/rules/git-workflow.md`; passo a passo nas skills `feature`, `bugfix`, `review` e `pr`.
 
 ## Testes
 

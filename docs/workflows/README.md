@@ -1,0 +1,41 @@
+# Workflows e demandas
+
+Cada demanda (feature, bugfix, chore...) tem uma pasta aqui, com o mesmo slug da branch:
+
+```
+docs/workflows/<slug>/
+├── spec.md             # o quê: objetivo, critérios de aceitação, fora de escopo
+├── technical-plan.md   # como: abordagem, arquivos, incrementos, validação, reversão
+├── review.md           # revisão antes do PR: veredito, evidências, riscos
+└── handoff.md          # só se a demanda for pausada no meio
+```
+
+Os templates ficam em `.claude/skills/spec-authoring/templates/`.
+
+## Fluxo
+
+```
+pedido ─▶ spec-authoring ─▶ feature | bugfix ─▶ review ─▶ /pr ─▶ squash merge na main
+          (spec + plano)    (branch, incrementos,  (revisor +   (push + PR,
+                             1 commit cada)          review.md)   só por /pr)
+```
+
+| Skill            | Como chamar                         | Faz                                                                 |
+| ---------------- | ----------------------------------- | ------------------------------------------------------------------- |
+| `spec-authoring` | automático ou `/spec-authoring ...` | escreve `spec.md` e `technical-plan.md`                             |
+| `feature`        | automático ou `/feature ...`        | branch `feat/<slug>`, incrementos com testes, portão, docs, revisão |
+| `bugfix`         | automático ou `/bugfix ...`         | branch `fix/<slug>`, teste que reproduz, causa raiz, correção       |
+| `review`         | automático ou `/review [foco]`      | portão + subagente `revisor` + critérios → `review.md`              |
+| `pr`             | **só** `/pr [--draft]`              | push, PR com o template, orienta o squash merge e a limpeza         |
+
+Regras sempre carregadas: `.claude/rules/git-workflow.md` (branches, commits, squash) e `.claude/rules/pending-fixes.md` (registro em `docs/pendencias.md`).
+
+## Status de uma demanda
+
+`rascunho` → `em andamento` → `em revisão` → `concluída` (ou `pausada`, com `handoff.md`).
+
+## Demandas
+
+| Slug                                    | Tipo  | Status     |
+| --------------------------------------- | ----- | ---------- |
+| [workflows-skills](./workflows-skills/) | chore | em revisão |
