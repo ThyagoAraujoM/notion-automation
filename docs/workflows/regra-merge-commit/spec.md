@@ -4,7 +4,7 @@
 - **Tipo:** docs
 - **Status:** concluída
 - **Branch:** `docs/regra-merge-commit`
-- **PR:** —
+- **PR:** [#3](https://github.com/ThyagoAraujoM/notion-automation/pull/3)
 - **Criada em:** 2026-11-20
 
 ## Objetivo
