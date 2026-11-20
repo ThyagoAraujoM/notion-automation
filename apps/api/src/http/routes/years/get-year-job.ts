@@ -24,6 +24,7 @@ export async function getYearJobRoute(app: FastifyInstance) {
           "- **`200`**: situação do job. Enquanto `status` é `running`, `statusCode`, `result` e `finishedAt` são `null`. Com `succeeded` ou `failed`, `statusCode` e `result` são o código e o corpo que a operação daria se fosse síncrona (ver a descrição de cada rota).",
           "- **`400`**: `jobId` não é um UUID.",
           "- **`404`**: job não encontrado.",
+          "- **`500`**: erro inesperado (ex.: banco fora do ar).",
         ].join("\n"),
         params: z.object({
           jobId: z.uuid().describe("Id do job (UUID)."),
@@ -54,6 +55,7 @@ export async function getYearJobRoute(app: FastifyInstance) {
           }),
           400: errorResponse,
           404: errorResponse,
+          500: errorResponse,
         },
       },
     },
