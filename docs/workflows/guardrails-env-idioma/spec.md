@@ -4,7 +4,7 @@
 - **Tipo:** chore
 - **Status:** concluída
 - **Branch:** `chore/guardrails-env-idioma`
-- **PR:** —
+- **PR:** [#9](https://github.com/ThyagoAraujoM/notion-automation/pull/9)
 - **Criada em:** 2026-11-20
 
 ## Objetivo
