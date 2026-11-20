@@ -2,7 +2,7 @@
 
 - **Slug:** `guardrails-env-idioma`
 - **Tipo:** chore
-- **Status:** em revisão
+- **Status:** concluída
 - **Branch:** `chore/guardrails-env-idioma`
 - **PR:** —
 - **Criada em:** 2026-11-20
