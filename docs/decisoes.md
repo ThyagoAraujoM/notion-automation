@@ -38,7 +38,7 @@
 
 - **Status:** aceita
 - **Contexto:** Ano, Trimestre, Mês, Semana e Dia têm propriedades diferentes.
-- **Decisão:** cada nível tem seu próprio database; IDs nas variáveis `*_TOKEN`.
+- **Decisão:** cada nível tem seu próprio database; IDs nas variáveis `*_DATABASE_ID` (antes `*_TOKEN`; ver 010).
 - **Alternativas:** _preencher_
 - **Consequências:** _preencher_
 
@@ -85,9 +85,48 @@
 - **Alternativas:** timeout na requisição HTTP inteira (descartado: cortaria criações normais de 7 min); rota assíncrona com 202 + consulta de status (adiada: só compensa se o `web` passar a consumir a API).
 - **Consequências:** uma chamada lenta mas válida (>60 s) vira erro; se isso acontecer na prática, aumentar `NOTION_TIMEOUT_MS`. A rota `GET /databases/:id/schema` ainda responde 500 em timeout.
 
+## 009 — Rotas REST por recurso (`/years`)
+
+- **Data:** 2026-11-19
+- **Status:** aceita
+- **Contexto:** `POST /createYear` e `DELETE /deleteYear` repetiam o verbo HTTP no caminho, e o reparo era uma flag (`repair: 1`) da rota de criar, que por isso respondia 200 **ou** 201 e misturava os erros das duas operações (404 só fazia sentido no reparo).
+- **Decisão:** `POST /years` (body `{ year?, startToday? }`), `POST /years/:year/repair` (body `{ startToday? }`) e `DELETE /years/:year`. Uma pasta por recurso em `http/routes/<recurso>/`, schemas comuns em `http/schemas/common.ts` e tradução de erros em `http/errors.ts` (`toHttpError`, tipado contra os status que cada rota declara).
+- **Alternativas:** `PUT /years/:year` para o reparo (descartado: reparo não substitui o recurso, é uma ação); manter `year` no body do reparo (descartado: o ano identifica o recurso, então vai no path); `year` obrigatório também no `POST /years` (descartado: o padrão "ano atual" é o uso mais comum).
+- **Consequências:** quebra clientes das rotas antigas (só havia uso manual/Swagger). O reparo perdeu o padrão "ano atual": o ano vai sempre no path. `startToday` continua nas duas rotas. Os services e o E2E não mudaram (chamam os services direto).
+
+## 010 — `*_TOKEN` de período renomeadas para `*_DATABASE_ID`
+
+- **Data:** 2026-11-19
+- **Status:** aceita
+- **Contexto:** `YEAR_TOKEN`, `QUARTERLY_TOKEN`... eram IDs de database, não tokens; a confusão precisava de um aviso no CLAUDE.md.
+- **Decisão:** `YEAR_DATABASE_ID`, `QUARTER_DATABASE_ID`, `MONTH_DATABASE_ID`, `WEEK_DATABASE_ID`, `DAY_DATABASE_ID`. `NOTION_TOKEN` segue sendo o único token.
+- **Consequências:** cada `.env` precisa ser atualizado à mão (o `.env.example` já está). Lição: nome bom é documentação que a IA não erra.
+
+## 011 — Vitest para testes unitários, portão lint + tipos + testes via Turbo
+
+- **Data:** 2026-11-19
+- **Status:** aceita
+- **Contexto:** a API não tinha scripts `lint`/`check-types`: o `pnpm lint && pnpm check-types` exigido pelo CLAUDE.md passava sem verificar a API (o Turbo mostra `<NONEXISTENT>` e segue). A única rede de proteção era o E2E de ~5 min no Notion real.
+- **Decisão:** scripts `lint` (ESLint 9 com a config base), `check-types` (`tsc --noEmit`) e `test` (Vitest) na API; `lint`/`check-types` no `packages/env`; tarefa `test` no `turbo.json`; variáveis em `globalEnv` do Turbo (exigido pelo `eslint-plugin-turbo` e correto para o cache). Testes ao lado do código (`*.test.ts`), começando pelo `routine-calendar`.
+- **Alternativas:** Jest (descartado: precisa de configuração extra para TS/ESM; Vitest roda TS direto e tem API compatível); `node:test` (descartado: sem watch/mocks tão práticos).
+- **Consequências:** `pnpm lint && pnpm check-types && pnpm test` cobre api, web e env. Para testar rotas, a montagem do Fastify saiu do `server.ts` para `http/app.ts` (`buildApp`). Os testes de rota acharam que `POST` sem body falhava com 400 (o Fastify entrega `null` e o Zod `.optional()` só aceita `undefined`); os bodies opcionais passaram a `.nullish()`. Os testes acharam que anos bissextos que começam no domingo (2040) têm **54 semanas** — exige o template `Semana 54`.
+
+## 012 — Web: landing page com Next.js App Router, Tailwind 4 e shadcn/ui
+
+- **Data:** 2026-11-19
+- **Status:** aceita
+- **Contexto:** `apps/web` ainda era o template do create-turbo (e `packages/ui` só existia para ele).
+- **Decisão:** landing page em `app/(home)/` (route group com `_components/` por seção), Tailwind 4 via `@tailwindcss/postcss`, componentes shadcn em `components/ui`. `packages/ui` e `meta.json` removidos.
+- **Alternativas:** manter `packages/ui` com os componentes shadcn (descartado por ora: só um app consome; volta a fazer sentido se surgir um segundo front).
+- **Consequências:** dark mode do shadcn é por classe (`.dark`), sem alternador ainda.
+
 ## Pendentes
 
-- [ ] Padrão de nomes para rotas HTTP
-- [ ] Framework de testes (Vitest?) — incluir criar/reparar ano com template, ordem dos filhos e detecção de página perdida (hoje a validação foi manual)
+- [x] Padrão de nomes para rotas HTTP — REST, ver 009
+- [x] Framework de testes — Vitest (011), com testes de rota (`app.inject`), helpers e builders. Falta: testes unitários dos services (create/repair/delete) com Notion mockado; detecção de página perdida e ordem dos filhos seguem só no E2E
 - [ ] Traduzir o projeto (i18n): mensagens de erro/respostas da API hoje misturam português e rótulos em inglês (ex.: 422 de templates usa `quarter:`, `week:`...)
-- [ ] Como relacionar os níveis no Notion
+- [x] Como relacionar os níveis no Notion — tabela em arquitetura.md
+- [ ] Template `Semana 54` no Notion (necessário em 2040, 2068, 2096)
+- [ ] CI no GitHub Actions (lint + tipos + testes em cada push/PR)
+- [ ] Fluxo de branches/PRs e skills para cada tipo de trabalho (feature, bugfix...): estudar depois
+- [ ] Logs: tabela única `year_operation` com status e erro (hoje só sucesso é gravado)

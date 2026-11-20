@@ -9,34 +9,35 @@ Gerar automaticamente, no Notion, a hierarquia de planejamento:
 ```
 Ano ─┬─ Trimestre (4) ─┬─ Mês (3 por trimestre) ─┬─ Semana ─┬─ Dia
      │                 │                          │          │
-  YEAR_TOKEN     QUARTERLY_TOKEN           MONTHLY_TOKEN  WEEKLY_TOKEN  DAILY_TOKEN
+  YEAR_DATABASE_ID     QUARTER_DATABASE_ID           MONTH_DATABASE_ID  WEEK_DATABASE_ID  DAY_DATABASE_ID
 ```
 
-Cada nível vive em um **database próprio do Notion**. As variáveis `*_TOKEN` são os IDs desses databases
-(usados em `parent.database_id`). Os níveis são ligados entre si por propriedades de relação
-(a definir — ver [decisoes.md](./decisoes.md)).
+Cada nível vive em um **database próprio do Notion**. As variáveis `*_DATABASE_ID` são os IDs desses databases
+(usados em `parent.database_id`). Os níveis são ligados entre si por propriedades de relação (tabela em [Rotina anual](#rotina-anual-post-years)).
 
 ## Monorepo
 
-| Pacote                                                 | Papel                                            |
-| ------------------------------------------------------ | ------------------------------------------------ |
-| `apps/api`                                             | API Fastify que fala com o Notion                |
-| `apps/web`                                             | Front Next.js (ainda template)                   |
-| `packages/env`                                         | Schema Zod + validação das variáveis de ambiente |
-| `packages/ui`                                          | Componentes React compartilhados                 |
-| `packages/eslint-config`, `packages/typescript-config` | Configs compartilhadas                           |
+| Pacote                                                 | Papel                                                                    |
+| ------------------------------------------------------ | ------------------------------------------------------------------------ |
+| `apps/api`                                             | API Fastify que fala com o Notion                                        |
+| `apps/web`                                             | Landing page do projeto (Next.js 16 App Router + Tailwind 4 + shadcn/ui) |
+| `packages/env`                                         | Schema Zod + validação das variáveis de ambiente                         |
+| `packages/eslint-config`, `packages/typescript-config` | Configs compartilhadas                                                   |
 
 ## Fluxo de uma requisição (API)
 
 ```
-HTTP ─▶ src/http/server.ts ─▶ src/http/routes/<rota>.ts ─▶ src/services/<caso-de-uso>.ts ─▶ src/integrations/notion/client.ts ─▶ Notion API
+HTTP ─▶ src/http/server.ts (listen) ─▶ src/http/app.ts (buildApp) ─▶ src/http/routes/<recurso>/<rota>.ts ─▶ src/services/<caso-de-uso>.ts ─▶ src/integrations/notion/client.ts ─▶ Notion API
           (registra plugins)    (valida com Zod, responde)    (regra de negócio)          (cliente singleton)
 ```
 
-- **Rotas** (`src/http/routes/`): só HTTP — schema Zod, status code, formato da resposta.
+- **`src/http/app.ts`**: `buildApp()` monta o Fastify (error handler, Swagger, rotas) sem abrir porta nem tocar no banco; usado pelo `server.ts` e pelos testes (`app.inject`). O `server.ts` só adiciona o fechamento do Prisma, limpa as travas e chama `listen`.
+- **Rotas** (`src/http/routes/<recurso>/`): só HTTP — schema Zod, status code, formato da resposta. Uma pasta por recurso REST (`years/`, `databases/`) com `index.ts` registrando as rotas do recurso.
+  - **`src/http/schemas/common.ts`**: schemas Zod repetidos (`errorResponse`, `yearParams`, `flagSchema`, `levelCounts`).
+  - **`src/http/errors.ts`**: `toHttpError` traduz erros de domínio em 400/404/409/422/504, limitado aos status que a rota declara.
 - **services** (`src/services/`): casos de uso (regra de negócio). Não conhece Fastify.
   - **`services/shared/`**: peças reutilizadas por mais de um caso de uso e que fazem I/O no Notion — `errors.ts` (`YearNotFoundError`, `YearAlreadyExistsError`), `year-pages.ts` (propriedades de cada nível, `createPage`, `prepareTemplates`, `trashPages`) e `year-hierarchy.ts` (`queryChildrenOf`, `collectYearHierarchy`: trimestres → meses → semanas → dias de um ano). Se duas funções de `services/` precisam do mesmo código, ele vai para cá.
-- **utils** (`src/utils/`): lógica pura, sem I/O (`routine-calendar.ts` = calendário; `notion-pages.ts` = `normId`, `uniqueById`, `indexBy`, `matchNumber`).
+- **utils** (`src/utils/`): lógica pura, sem I/O (`routine-calendar.ts` = calendário, com testes em `routine-calendar.test.ts`; `notion-pages.ts` = `normId`, `uniqueById`, `indexBy`, `matchNumber`).
 - **scripts** (`src/scripts/`): programas de linha de comando, fora da API (hoje: `e2e-routine.ts`, ver [convencoes.md](./convencoes.md#testes)). Chamam os services direto.
 - **integrations** (`src/integrations/notion/`): cliente e helpers do Notion.
 - **db** (`src/db/`): client Prisma e gravação de logs.
@@ -53,19 +54,28 @@ Ambos carregam o `.env` da raiz via `dotenv -e ../../.env`.
 
 ## Rotas existentes
 
-| Método | Rota                            | Arquivo                             | Estado                                                                                                                                 |
-| ------ | ------------------------------- | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| POST   | `/createYear`                   | `routes/new-year.ts`                | Cria a rotina anual completa (Ano → Dias) para `year` (padrão: ano atual); 409 se o ano já existe                                      |
-| DELETE | `/deleteYear`                   | `routes/delete-year.ts`             | Manda para a lixeira do Notion o ano `year` (query, obrigatório) e todos os trimestres, meses, semanas e dias; 404 se o ano não existe |
-| GET    | `/databases/:databaseId/schema` | `routes/get-database-schema.ts`     | Lista data sources e propriedades (id, nome, tipo + destino das relações) de um database; 404 se não existir/sem acesso                |
-| GET    | `/docs` (+ `/docs/json`)        | `server.ts` (`@fastify/swagger-ui`) | Swagger UI / spec OpenAPI gerada dos schemas Zod                                                                                       |
+| Método | Rota                            | Arquivo                                   | O que faz                                                                                                               |
+| ------ | ------------------------------- | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| POST   | `/years`                        | `routes/years/create-year.ts`             | Cria a rotina anual (Ano → Dias). Body `{ year?, startToday? }`; 201, 409 se o ano já existe                            |
+| POST   | `/years/:year/repair`           | `routes/years/repair-year.ts`             | Repara um ano existente (cria o que falta, religa pais errados). Body `{ startToday? }`; 200, 404 se o ano não existe   |
+| DELETE | `/years/:year`                  | `routes/years/delete-year.ts`             | Manda para a lixeira do Notion o ano e todos os trimestres, meses, semanas e dias; 404 se o ano não existe              |
+| GET    | `/databases/:databaseId/schema` | `routes/databases/get-database-schema.ts` | Lista data sources e propriedades (id, nome, tipo + destino das relações) de um database; 404 se não existir/sem acesso |
+| GET    | `/docs` (+ `/docs/json`)        | `app.ts` (`@fastify/swagger-ui`)          | Swagger UI / spec OpenAPI gerada dos schemas Zod                                                                        |
 
-> Swagger: `@fastify/swagger` deve ser registrado **antes** das rotas em `server.ts`. Para uma rota aparecer
+Parâmetros por rota (antes tudo ficava em `POST /createYear` e `DELETE /deleteYear?year=`; ver decisão 009):
+
+| Parâmetro    | `POST /years`                    | `POST /years/:year/repair`                    | `DELETE /years/:year` |
+| ------------ | -------------------------------- | --------------------------------------------- | --------------------- |
+| `year`       | body, opcional (ano atual)       | path, obrigatório                             | path, obrigatório     |
+| `startToday` | body, opcional                   | body, opcional (confere só de hoje em diante) | —                     |
+| `repair`     | removido: virou a rota `/repair` | —                                             | —                     |
+
+> Swagger: `@fastify/swagger` deve ser registrado **antes** das rotas em `app.ts`. Para uma rota aparecer
 > numa seção do docs, use `tags` no schema; a ordem das seções segue `openapi.tags`.
 
-## Rotina anual (`POST /createYear`)
+## Rotina anual (`POST /years`)
 
-Body opcional `{ "year": 2027, "startToday": 0, "repair": 0 }` (sem `year` → ano atual). Código: `routes/new-year.ts` → `services/create-year.ts` / `services/repair-year.ts` → `utils/routine-calendar.ts` (calendário puro) e `integrations/notion/helpers.ts` (consultas e propriedades).
+Body opcional `{ "year": 2027, "startToday": 0 }` (sem `year` → ano atual). Código: `routes/years/create-year.ts` → `services/create-year.ts` (reparo: `routes/years/repair-year.ts` → `services/repair-year.ts`) → `utils/routine-calendar.ts` (calendário puro) e `integrations/notion/helpers.ts` (consultas e propriedades).
 
 Fluxo: (1) resolve o ano → (2) consulta o database de anos pelo `Name`; se existir, **409** →
 (3) `buildYearPlan` calcula trimestres/meses/semanas/dias → (4) busca os templates de cada database e valida que existem (senão **422**, sem criar nada) →
@@ -84,9 +94,9 @@ Resposta **201** com a contagem do que foi criado.
 as semanas que ainda têm algum desses dias (mantendo a numeração do ano, ex.: `Semana 46`, e o rótulo completo da semana),
 os meses e trimestres de hoje em diante. Só vale para o **ano atual** (outro ano → **400**). Na criação, uma semana que
 começou no mês anterior liga ao primeiro mês criado; no `repair`, essa semana não é religada (o mês correto está fora do escopo).
-Se o ano já existir (sem `repair`), continua 409.
+Se o ano já existir, `POST /years` responde 409 (use o reparo).
 
-**`repair` (`1` ou `0`, padrão `0`):** com `1`, em vez de criar, **repara** o ano informado (`services/repair-year.ts`).
+**Reparo (`POST /years/:year/repair`):** **repara** o ano do path (`services/repair-year.ts`); aceita `startToday` no body.
 O ano precisa existir (senão **404**). Fluxo: busca os trimestres ligados ao ano → os meses ligados a eles → as semanas
 ligadas aos meses; os **dias** são buscados pela propriedade `Data` (dentro do ano). Cada item do calendário é casado por
 número (`Número do Trimestre`, `Nº do mês`, `Semana nº`) ou data, com fallback no nome. O que falta é **criado e vinculado**;
@@ -119,8 +129,8 @@ Regras do calendário:
 - Client único em `apps/api/src/db/prisma.ts`; a conexão fecha no hook `onClose` do `server.ts`.
 - Comandos (em `apps/api`): `db:migrate` (cria/aplica migration em dev), `db:deploy`, `db:studio`.
 - Tabelas (uma migration cada), ambas com `id`, `response` (JSON) e `created_at`:
-  - `log_create_year`: resposta de sucesso (201 e 200 do `repair`) de `POST /createYear`.
-  - `log_deleted_year`: resposta de sucesso de `DELETE /deleteYear`.
+  - `log_create_year`: resposta de sucesso de `POST /years` (201) e de `POST /years/:year/repair` (200).
+  - `log_deleted_year`: resposta de sucesso de `DELETE /years/:year`.
   - `year_operation_lock`: **trava por ano** (`year` é a chave primária, `operation`, `started_at`). Ver abaixo.
 - A gravação do log acontece depois da operação no Notion; se o insert falhar, o erro só é logado e a resposta da rota não muda.
 
@@ -137,4 +147,4 @@ Regras do calendário:
 
 - [x] Como os níveis se relacionam (propriedades de relação no Notion) — ver tabela acima
 - [x] Estratégia para evitar duplicatas (ano já existe?) — consulta por `Name` no database de anos
-- [ ] Papel do app `web`
+- [x] Papel do app `web` — landing page que explica o projeto (`app/(home)/`)
