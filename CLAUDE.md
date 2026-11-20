@@ -65,5 +65,5 @@ Pedido de código segue: `spec-authoring` → `feature` ou `bugfix` → `revisar
 
 ## Pontos de atenção conhecidos
 
-- A API precisa do Postgres no ar (`pnpm db:up`) e das variáveis `POSTGRES_*` no `.env`; as rotas de `/years` gravam log no banco e usam uma trava por ano (`year_operation_lock`); rode `pnpm --filter=@notion-automation/api db:deploy` para aplicar as migrations.
+- A API precisa do Postgres no ar (`pnpm db:up`) e das variáveis `POSTGRES_*` no `.env`; as rotas de `/years` gravam cada requisição (sucesso ou erro) em `operation_log` e usam uma trava por ano (`year_operation_lock`); rode `pnpm --filter=@notion-automation/api db:deploy` para aplicar as migrations.
 - Anos bissextos que começam no domingo (2040, 2068, 2096) têm **54 semanas**: o database de semanas precisa do template `Semana 54`, senão a criação responde 422.

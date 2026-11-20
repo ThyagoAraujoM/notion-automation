@@ -37,7 +37,7 @@ Regras sempre carregadas: `.claude/rules/git-workflow.md` (branches, commits, sq
 
 ## Demandas
 
-| Slug                                                          | Tipo    | Status       |
-| ------------------------------------------------------------- | ------- | ------------ |
-| [workflows-skills](./workflows-skills/)                       | chore   | concluída    |
-| [log-operacoes-postgres-host](./log-operacoes-postgres-host/) | feature | em andamento |
+| Slug                                                          | Tipo    | Status     |
+| ------------------------------------------------------------- | ------- | ---------- |
+| [workflows-skills](./workflows-skills/)                       | chore   | concluída  |
+| [log-operacoes-postgres-host](./log-operacoes-postgres-host/) | feature | em revisão |

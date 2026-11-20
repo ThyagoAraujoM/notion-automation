@@ -32,9 +32,9 @@ Contratos: respostas HTTP **não mudam**. Muda o banco (tabelas) e entra uma var
 | --- | ---------------------------------------------------------- | ------------------------------------------------------------------------------- | ------------- | ------------------------------------------- | ------------ |
 | 1   | Spec, plano e skill `/feat`                                | — (docs); `/feat` aparece no harness                                            | CA1           | arquivos commitados                         | ✅ `2466f73` |
 | 2   | `POSTGRES_HOST` (env, turbo, prisma.ts, prisma.config)     | check-types; `prisma migrate status` conecta                                    | CA2           | sem `localhost` fixo; portão verde          | ✅ `97898be` |
-| 3   | Schema + migration com cópia de dados + `saveOperationLog` | migration aplicada no Postgres local; contagem de linhas antes/depois           | CA3, CA6      | linhas antigas presentes em `operation_log` | ✅           |
-| 4   | Helper nas rotas + testes de log; remove `save-log.ts`     | `years.test.ts`: log em 201/200, 409, 422, 504, 500 (com `error`), falha do log | CA4, CA5, CA7 | portão verde                                | ✅           |
-| 5   | Docs, ADR 014, pendências                                  | —                                                                               | CA8           | docs coerentes                              | ⬜           |
+| 3   | Schema + migration com cópia de dados + `saveOperationLog` | migration aplicada no Postgres local; contagem de linhas antes/depois           | CA3, CA6      | linhas antigas presentes em `operation_log` | ✅ `e4ba268` |
+| 4   | Helper nas rotas + testes de log; remove `save-log.ts`     | `years.test.ts`: log em 201/200, 409, 422, 504, 500 (com `error`), falha do log | CA4, CA5, CA7 | portão verde                                | ✅ `e4ba268` |
+| 5   | Docs, ADR 014, pendências                                  | —                                                                               | CA8           | docs coerentes                              | ✅           |
 
 ## Validação
 
@@ -52,3 +52,4 @@ Reverter o commit do squash não desfaz o banco. Para voltar: nova migration que
 - 2026-11-20 — Incrementos 3 e 4 viraram um commit só: tirar os modelos antigos do schema quebra os tipos do `save-log.ts`, e a branch não pode ficar vermelha entre commits.
 - 2026-11-20 — `prisma migrate dev` recusa rodar sem terminal interativo quando há perda de dados; SQL gerado com `prisma migrate diff --from-config-datasource` e aplicado com `db:deploy`. Postgres local: 4 linhas antigas (3 create, das quais 1 reparo, e 1 delete) copiadas para `operation_log`; tabelas antigas removidas; `migrate diff --exit-code` sem drift.
 - 2026-11-20 — Teste de mutação: sem o `log` do erro conhecido em `delete-year.ts`, 2 testes falham.
+- 2026-11-20 — Integração com a API real (o usuário já estava com ela no ar): `DELETE /years/1990` → 404 e `POST /years` 2026 → 409 geraram as linhas 5 e 6 em `operation_log` com status `error`, código, duração e mensagem. Nenhuma escrita no Notion.

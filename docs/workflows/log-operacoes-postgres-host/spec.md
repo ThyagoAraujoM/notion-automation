@@ -2,7 +2,7 @@
 
 - **Slug:** `log-operacoes-postgres-host`
 - **Tipo:** feature
-- **Status:** em andamento
+- **Status:** em revisão
 - **Branch:** `feat/log-operacoes-postgres-host`
 - **PR:** —
 - **Criada em:** 2026-11-20
@@ -20,14 +20,14 @@ Registrar **toda** operação de ano (criar, reparar, apagar), com sucesso ou er
 
 ## Critérios de aceitação
 
-- [ ] **CA1** — `/feat <descrição>` inicia o mesmo fluxo da skill `feature` (atalho manual, sem gatilho automático próprio).
-- [ ] **CA2** — Variável `POSTGRES_HOST` (padrão `localhost`) usada pela API (`db/prisma.ts`) e pela CLI do Prisma (`prisma.config.ts`), declarada em `packages/env` (`server` e `runtimeEnv`) e no `globalEnv` do `turbo.json`. Sem `localhost` fixo no código.
-- [ ] **CA3** — Tabela única `operation_log` com: `year`, `operation` (`createYear` | `repairYear` | `deleteYear`), `status` (`success` | `error`), `status_code`, `response` (corpo enviado ao cliente), `error` (mensagem interna, quando houver), `started_at`, `finished_at` e `duration_ms`.
-- [ ] **CA4** — As três rotas de `/years` gravam uma linha por requisição que chega ao handler: sucesso (200/201) e erro (400 de `startToday`, 404, 409, 422, 504 e 500). Validação do Zod (400 antes do handler) não grava.
-- [ ] **CA5** — Falha ao gravar o log não muda a resposta da rota (só é logada no console da API).
-- [ ] **CA6** — Migration copia as linhas de `log_create_year` e `log_deleted_year` para `operation_log` (reparo identificado pela chave `relinked`) e remove as tabelas antigas. Nenhum log existente se perde.
-- [ ] **CA7** — Testes de rota conferem o log em sucesso, em erro conhecido e em erro inesperado (com a mensagem interna em `error` e sem vazá-la na resposta).
-- [ ] **CA8** — Docs atualizadas (arquitetura, convenções de teste, ADR, pendências `PF-003`/`PF-004` resolvidas).
+- [x] **CA1** — `/feat <descrição>` inicia o mesmo fluxo da skill `feature` (atalho manual, sem gatilho automático próprio).
+- [x] **CA2** — Variável `POSTGRES_HOST` (padrão `localhost`) usada pela API (`db/prisma.ts`) e pela CLI do Prisma (`prisma.config.ts`), declarada em `packages/env` (`server` e `runtimeEnv`) e no `globalEnv` do `turbo.json`. Sem `localhost` fixo no código.
+- [x] **CA3** — Tabela única `operation_log` com: `year`, `operation` (`createYear` | `repairYear` | `deleteYear`), `status` (`success` | `error`), `status_code`, `response` (corpo enviado ao cliente), `error` (mensagem interna, quando houver), `started_at`, `finished_at` e `duration_ms`.
+- [x] **CA4** — As três rotas de `/years` gravam uma linha por requisição que chega ao handler: sucesso (200/201) e erro (400 de `startToday`, 404, 409, 422, 504 e 500). Validação do Zod (400 antes do handler) não grava.
+- [x] **CA5** — Falha ao gravar o log não muda a resposta da rota (só é logada no console da API).
+- [x] **CA6** — Migration copia as linhas de `log_create_year` e `log_deleted_year` para `operation_log` (reparo identificado pela chave `relinked`) e remove as tabelas antigas. Nenhum log existente se perde.
+- [x] **CA7** — Testes de rota conferem o log em sucesso, em erro conhecido e em erro inesperado (com a mensagem interna em `error` e sem vazá-la na resposta).
+- [x] **CA8** — Docs atualizadas (arquitetura, convenções de teste, ADR, pendências `PF-003`/`PF-004` resolvidas).
 
 ## Fora de escopo
 
