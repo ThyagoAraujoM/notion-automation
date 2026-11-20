@@ -4,7 +4,7 @@
 - **Tipo:** feature
 - **Status:** concluída
 - **Branch:** `feat/log-operacoes-postgres-host`
-- **PR:** —
+- **PR:** [#2](https://github.com/ThyagoAraujoM/notion-automation/pull/2)
 - **Criada em:** 2026-11-20
 
 ## Objetivo
