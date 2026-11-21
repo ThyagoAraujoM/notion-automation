@@ -33,6 +33,17 @@ export function findYearJob(id: string) {
   return prisma.yearJob.findUnique({ where: { id } });
 }
 
+/** Desfecho gravado nos jobs interrompidos (boot após queda ou shutdown da API). */
+function interruptedData() {
+  return {
+    status: "failed" as const,
+    statusCode: 500,
+    result: { success: false, message: INTERRUPTED_JOB_MESSAGE },
+    error: "interrompido: a API reiniciou com o job em andamento",
+    finishedAt: new Date(),
+  };
+}
+
 /**
  * Marca como `failed` os jobs que ficaram `running` (o processo morreu no meio).
  * Chamado ao subir a API: só há uma instância, então nenhum job está rodando de fato.
@@ -40,12 +51,19 @@ export function findYearJob(id: string) {
 export function failInterruptedYearJobs() {
   return prisma.yearJob.updateMany({
     where: { status: "running" },
-    data: {
-      status: "failed",
-      statusCode: 500,
-      result: { success: false, message: INTERRUPTED_JOB_MESSAGE },
-      error: "interrompido: a API reiniciou com o job em andamento",
-      finishedAt: new Date(),
-    },
+    data: interruptedData(),
+  });
+}
+
+/**
+ * Marca como `failed` os jobs informados, **só os que ainda estão `running`**: um job que
+ * terminou no mesmo instante mantém o desfecho que gravou. Chamado no shutdown, com os
+ * jobs deste processo (não espera ninguém terminar).
+ */
+export async function failYearJobs(ids: string[]) {
+  if (ids.length === 0) return;
+  await prisma.yearJob.updateMany({
+    where: { id: { in: ids }, status: "running" },
+    data: interruptedData(),
   });
 }
