@@ -43,5 +43,6 @@ Sem mudança de contrato público (rotas, status, schema do banco).
 ## Acompanhamento
 
 - 2026-11-20 — Demanda aberta a partir da PF-016, com a abordagem "marcar como `failed` no shutdown" (em vez de esperar os jobs) decidida com o usuário.
-- 2026-11-20 — Inc. 1–3 com teste que falhava antes (`failYearJobs` inexistente; `finishYearJob` com uma tentativa só). Inc. 2 tem teste unitário de `failRunningYearJobs`, mas os handlers de sinal do `server.ts` não são testáveis em unitário: **a conferência manual com Ctrl+C durante um job real (DELETE num ano avulso, escreve no Notion) não foi feita** — pendente de autorização do usuário.
+- 2026-11-20 — Inc. 1–3 com teste que falhava antes (`failYearJobs` inexistente; `finishYearJob` com uma tentativa só). Inc. 2 tem teste unitário de `failRunningYearJobs`; os handlers de sinal do `server.ts` não são testáveis em unitário.
+- 2026-11-20 — Conferência manual (autorizada): `node` direto + `POST /years/2090/repair` + Ctrl+C → job `failed` 500 e trava solta na hora. Com `pnpm start:local` o shutdown não roda (wrappers do Windows matam o `node`); o boot corrige. Ano 2090 apagado ao fim.
 - 2026-11-20 — Revisão: prazo/segundo sinal e `release` idempotente corrigidos em `a1c9d0e`; janela antes do registro do job aceita (documentada). Resultado em [review.md](./review.md).

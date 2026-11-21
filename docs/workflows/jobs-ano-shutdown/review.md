@@ -3,7 +3,7 @@
 > Spec: [spec.md](./spec.md) · Plano: [technical-plan.md](./technical-plan.md)
 
 - **Data:** 2026-11-20
-- **Veredito:** ⚠️ pronto com ressalvas (nada bloqueante; falta a conferência manual com Ctrl+C num job real)
+- **Veredito:** ✅ pronto (conferido com Ctrl+C num job real; ressalvas registradas abaixo)
 
 ## Critérios de aceitação
 
@@ -16,10 +16,11 @@
 
 ## Comandos executados
 
-| Comando                                      | Resultado                                                 |
-| -------------------------------------------- | --------------------------------------------------------- |
-| `pnpm lint && pnpm check-types && pnpm test` | verde (146 testes no API)                                 |
-| Ctrl+C durante um job real                   | **não feito** (escreve no Notion; precisa de autorização) |
+| Comando                                                               | Resultado                                                                                                                                        |
+| --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `pnpm lint && pnpm check-types && pnpm test`                          | verde (146 testes no API)                                                                                                                        |
+| Ctrl+C durante um job real (`node` direto, `POST /years/2090/repair`) | job `failed` (500) e trava solta na hora, processo encerrado; ano 2090 apagado depois (`DELETE`, 31 páginas)                                     |
+| Ctrl+C com `pnpm start:local` (wrappers `pnpm`/`dotenv` do Windows)   | **o shutdown não rodou**: o `cmd` pergunta "finalizar o arquivo em lotes" e o `node` morre antes; job ficou `running` até o boot (CA4 funcionou) |
 
 ## Problemas encontrados
 
@@ -34,6 +35,7 @@ Revisão do subagente `revisor`:
 
 ## Riscos residuais e limitações
 
-- Handlers de sinal do `server.ts` sem teste automatizado (arquivo de boot); só a conferência manual cobre o fluxo completo.
+- Handlers de sinal do `server.ts` sem teste automatizado (arquivo de boot); cobertos pela conferência manual acima.
+- No Windows, `pnpm start:local` (e `pnpm dev`, com wrappers) pode matar o `node` antes do shutdown; o boot corrige. Em produção `start` roda `node` direto.
 - Vale para uma instância da API (ADR 017). `kill -9`, crash e fechar o terminal no Windows caem no boot.
 - `year_job` não tem limpeza automática.
