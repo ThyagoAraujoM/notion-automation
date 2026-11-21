@@ -2,9 +2,9 @@
 
 - **Slug:** `testes-services-e-trava`
 - **Tipo:** test
-- **Status:** em revisão
+- **Status:** concluída
 - **Branch:** `test/testes-services-e-trava`
-- **PR:** —
+- **PR:** [#10](https://github.com/ThyagoAraujoM/notion-automation/pull/10)
 - **Criada em:** 2026-11-20
 
 ## Objetivo
