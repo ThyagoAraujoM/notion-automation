@@ -17,11 +17,15 @@ app.addHook("onClose", async () => {
 });
 
 // Sem isso o processo morre sem passar pelo `onClose`.
+// O primeiro sinal fecha com calma, mas com limite (banco fora do ar pode pendurar o `onClose`);
+// um segundo sinal força a saída.
+const SHUTDOWN_TIMEOUT_MS = 10_000;
 let closing = false;
 for (const signal of ["SIGINT", "SIGTERM"] as const) {
   process.on(signal, () => {
-    if (closing) return;
+    if (closing) process.exit(1);
     closing = true;
+    setTimeout(() => process.exit(1), SHUTDOWN_TIMEOUT_MS).unref();
     app.log.info(`${signal} recebido, encerrando a API`);
     app.close().then(
       () => process.exit(0),

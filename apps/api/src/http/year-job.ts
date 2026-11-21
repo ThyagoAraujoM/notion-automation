@@ -46,7 +46,15 @@ export async function startYearJob<T>(options: {
 }): Promise<{ jobId: string }> {
   const { request, year, operation, params, log, run, toOutcome } = options;
 
-  const release = await acquireYearLock(year, operation);
+  const releaseLock = await acquireYearLock(year, operation);
+  // Idempotente: o shutdown e o fim do job podem soltar a mesma trava, e `releaseYearLock`
+  // apaga pelo ano, não pelo dono (a segunda chamada poderia apagar a trava de outra operação).
+  let released = false;
+  const release = async () => {
+    if (released) return;
+    released = true;
+    await releaseLock();
+  };
 
   let jobId: string;
   try {
@@ -68,6 +76,8 @@ export async function startYearJob<T>(options: {
         request.log.error(outcome.error, `Erro inesperado no job ${jobId}`);
       }
 
+      // Se o shutdown já marcou o job como `failed` e o job terminar antes de o processo sair,
+      // o desfecho real sobrescreve a marca de interrupção: é intencional (é o que de fato houve).
       await saveOutcome(
         jobId,
         {

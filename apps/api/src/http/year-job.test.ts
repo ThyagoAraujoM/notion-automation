@@ -63,6 +63,16 @@ describe("failRunningYearJobs", () => {
     expect(release).toHaveBeenCalledTimes(2);
   });
 
+  it("solta a trava uma vez só, mesmo se o job terminar depois do shutdown", async () => {
+    await startPendingJob("job-4", 2094);
+
+    await failRunningYearJobs();
+    finishers.splice(0).forEach((finish) => finish());
+    await settleYearJobs();
+
+    expect(release).toHaveBeenCalledTimes(1);
+  });
+
   it("não toca no banco quando nenhum job está em andamento", async () => {
     await failRunningYearJobs();
 
