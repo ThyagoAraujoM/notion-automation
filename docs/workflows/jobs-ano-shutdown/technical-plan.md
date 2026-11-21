@@ -23,12 +23,12 @@ Sem mudança de contrato público (rotas, status, schema do banco).
 
 ## Incrementos
 
-| #   | Mudança                                                          | Testes previstos                                         | Critérios | Pronto quando               | Status |
-| --- | ---------------------------------------------------------------- | -------------------------------------------------------- | --------- | --------------------------- | ------ |
-| 1   | Teste que falha + `failYearJobs` (só `running`) e IDs em memória | unitário (Prisma mockado): só `running`, ids do processo | CA1, CA2  | teste falhava antes e passa | ⏳     |
-| 2   | Shutdown: handlers de sinal, `onClose` marca falha e solta trava | unitário do `failRunningYearJobs`; manual com Ctrl+C     | CA1, CA4  | portão verde + conferido    | ⏳     |
-| 3   | Retentativa e fallback de `finishYearJob`                        | unitário: falha 1x e passa; falha sempre → `failed`      | CA3       | portão verde                | ⏳     |
-| 4   | Docs (arquitetura, ADR, PF-016 resolvida)                        | —                                                        | —         | docs coerentes              | ⏳     |
+| #   | Mudança                                                          | Testes previstos                                         | Critérios | Pronto quando               | Status            |
+| --- | ---------------------------------------------------------------- | -------------------------------------------------------- | --------- | --------------------------- | ----------------- |
+| 1   | Teste que falha + `failYearJobs` (só `running`) e IDs em memória | unitário (Prisma mockado): só `running`, ids do processo | CA1, CA2  | teste falhava antes e passa | ✅ `5564f25`      |
+| 2   | Shutdown: handlers de sinal, `onClose` marca falha e solta trava | unitário do `failRunningYearJobs`; manual com Ctrl+C     | CA1, CA4  | portão verde + conferido    | ✅ `e8a4e2e`      |
+| 3   | Retentativa e fallback de `finishYearJob`                        | unitário: falha 1x e passa; falha sempre → `failed`      | CA3       | portão verde                | ✅ `ddaecfd`      |
+| 4   | Docs (arquitetura, ADR, PF-016 resolvida)                        | —                                                        | —         | docs coerentes              | ✅ próximo commit |
 
 ## Validação
 
@@ -43,3 +43,4 @@ Sem mudança de contrato público (rotas, status, schema do banco).
 ## Acompanhamento
 
 - 2026-11-20 — Demanda aberta a partir da PF-016, com a abordagem "marcar como `failed` no shutdown" (em vez de esperar os jobs) decidida com o usuário.
+- 2026-11-20 — Inc. 1–3 com teste que falhava antes (`failYearJobs` inexistente; `finishYearJob` com uma tentativa só). Inc. 2 tem teste unitário de `failRunningYearJobs`, mas os handlers de sinal do `server.ts` não são testáveis em unitário: **a conferência manual com Ctrl+C durante um job real (DELETE num ano avulso, escreve no Notion) não foi feita** — pendente de autorização do usuário.

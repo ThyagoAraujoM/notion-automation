@@ -2,7 +2,7 @@
 
 - **Slug:** `jobs-ano-shutdown`
 - **Tipo:** bugfix
-- **Status:** rascunho
+- **Status:** em revisão
 - **Branch:** `fix/jobs-ano-shutdown`
 - **PR:** —
 - **Criada em:** 2026-11-20
@@ -35,10 +35,10 @@ No shutdown a API marca como `failed` os jobs `running` deste processo (mesma me
 
 ## Critérios de aceitação
 
-- [ ] **CA1** — Ao receber `SIGTERM` ou `SIGINT`, a API marca como `failed` (status 500, mensagem de interrupção) os jobs `running` do processo, libera as travas e só então desconecta o Prisma, sem esperar os jobs.
-- [ ] **CA2** — A marcação só altera jobs ainda `running`: um job que terminou no mesmo instante mantém o desfecho gravado.
-- [ ] **CA3** — Se `finishYearJob` falhar, é retentado algumas vezes; esgotadas as tentativas, o job é marcado `failed` (e o erro vai para o log).
-- [ ] **CA4** — O boot continua corrigindo `running` e travas deixados por crash ou `SIGKILL`.
+- [x] **CA1** — Ao receber `SIGTERM` ou `SIGINT`, a API marca como `failed` (status 500, mensagem de interrupção) os jobs `running` do processo, libera as travas e só então desconecta o Prisma, sem esperar os jobs.
+- [x] **CA2** — A marcação só altera jobs ainda `running`: um job que terminou no mesmo instante mantém o desfecho gravado.
+- [x] **CA3** — Se `finishYearJob` falhar, é retentado algumas vezes; esgotadas as tentativas, o job é marcado `failed` (e o erro vai para o log).
+- [x] **CA4** — O boot continua corrigindo `running` e travas deixados por crash ou `SIGKILL`.
 
 ## Fora de escopo
 
