@@ -15,7 +15,7 @@
 
 | ID     | Data       | Como                                                                                                                                                                                                                     |
 | ------ | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| PF-012 | 2026-11-20 | botão de tema (lua/sol) no canto superior direito da landing, com persistência e `prefers-color-scheme`, demanda `toggle-tema-web`                                                                                       |
+| PF-012 | 2026-11-20 | botão de tema (lua/sol) no canto superior direito da landing, com persistência e `prefers-color-scheme`, demanda `toggle-tema-web`, PR #13                                                                               |
 | PF-010 | 2026-11-20 | ADRs 001–003 de `docs/decisoes.md` com alternativas e consequências preenchidas                                                                                                                                          |
 | PF-013 | 2026-11-20 | `GET /databases/:databaseId/schema` testada contra o Notion real: 200 com ID em minúsculas, com e sem hífens. O erro visto antes era página desatualizada. Nota: ID em maiúsculas passa no regex e o Notion responde 400 |
 | PF-006 | 2026-11-20 | testes dos services com Notion falso em memória e da trava (unitário com Prisma mockado + integração com Postgres, `test:integration`), demanda `testes-services-e-trava`, PR #10                                        |
