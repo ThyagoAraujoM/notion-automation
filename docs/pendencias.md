@@ -16,15 +16,15 @@
 
 ## Resolvidas
 
-| ID     | Data       | Como                                                                                                                                                                      |
-| ------ | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| PF-006 | 2026-11-20 | testes dos services com Notion falso em memória e da trava (unitário com Prisma mockado + integração com Postgres, `test:integration`), demanda `testes-services-e-trava` |
-| PF-008 | 2026-11-20 | hook `PreToolUse` `guard.mjs` bloqueia commit na `main` e leitura do arquivo de ambiente por shell (ADR 020), demanda `guardrails-env-idioma`                             |
-| PF-009 | 2026-11-20 | lint de `process.env`, teste `env-consistency` e skills `nova-variavel-env` e `nova-migration` (ADR 020), demanda `guardrails-env-idioma`                                 |
-| PF-011 | 2026-11-20 | política de idioma (ADR 021): mensagens em português sem rótulos técnicos, Zod com locale `pt`, demanda `guardrails-env-idioma`                                           |
-| PF-001 | 2026-11-20 | criar, reparar e apagar respondem 202 e rodam em segundo plano; `GET /years/jobs/:jobId` (ADR 017), demanda `years-jobs-assincronos`, PR #5                               |
-| PF-002 | 2026-11-20 | workflow `.github/workflows/ci.yml` (install, lint, tipos, testes, build do web; ADR 018), demanda `ci-github-actions`. Falta exigir o check na branch protection         |
-| PF-005 | 2026-11-20 | `engines.node` `>=20.19`; build com tsup (`dist/server.js`), scripts `build`/`start`/`start:local` (ADR 019), demanda `build-start-api`                                   |
-| PF-003 | 2026-11-20 | tabela única `operation_log` com sucesso e erro (ADR 014), demanda `log-operacoes-postgres-host`                                                                          |
-| PF-004 | 2026-11-20 | variável `POSTGRES_HOST` (padrão `localhost`), demanda `log-operacoes-postgres-host`                                                                                      |
-| PF-015 | 2026-11-20 | `.gitattributes` com `* text=auto eol=lf` (ADR 016), demanda `gitattributes-eol`                                                                                          |
+| ID     | Data       | Como                                                                                                                                                                              |
+| ------ | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| PF-006 | 2026-11-20 | testes dos services com Notion falso em memória e da trava (unitário com Prisma mockado + integração com Postgres, `test:integration`), demanda `testes-services-e-trava`, PR #10 |
+| PF-008 | 2026-11-20 | hook `PreToolUse` `guard.mjs` bloqueia commit na `main` e leitura do arquivo de ambiente por shell (ADR 020), demanda `guardrails-env-idioma`                                     |
+| PF-009 | 2026-11-20 | lint de `process.env`, teste `env-consistency` e skills `nova-variavel-env` e `nova-migration` (ADR 020), demanda `guardrails-env-idioma`                                         |
+| PF-011 | 2026-11-20 | política de idioma (ADR 021): mensagens em português sem rótulos técnicos, Zod com locale `pt`, demanda `guardrails-env-idioma`                                                   |
+| PF-001 | 2026-11-20 | criar, reparar e apagar respondem 202 e rodam em segundo plano; `GET /years/jobs/:jobId` (ADR 017), demanda `years-jobs-assincronos`, PR #5                                       |
+| PF-002 | 2026-11-20 | workflow `.github/workflows/ci.yml` (install, lint, tipos, testes, build do web; ADR 018), demanda `ci-github-actions`. Falta exigir o check na branch protection                 |
+| PF-005 | 2026-11-20 | `engines.node` `>=20.19`; build com tsup (`dist/server.js`), scripts `build`/`start`/`start:local` (ADR 019), demanda `build-start-api`                                           |
+| PF-003 | 2026-11-20 | tabela única `operation_log` com sucesso e erro (ADR 014), demanda `log-operacoes-postgres-host`                                                                                  |
+| PF-004 | 2026-11-20 | variável `POSTGRES_HOST` (padrão `localhost`), demanda `log-operacoes-postgres-host`                                                                                              |
+| PF-015 | 2026-11-20 | `.gitattributes` com `* text=auto eol=lf` (ADR 016), demanda `gitattributes-eol`                                                                                                  |

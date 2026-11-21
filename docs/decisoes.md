@@ -23,24 +23,24 @@
 - **Status:** aceita
 - **Contexto:** API e front no mesmo projeto, compartilhando env, configs e UI.
 - **Decisão:** Turborepo + pnpm workspaces.
-- **Alternativas:** _preencher_
-- **Consequências:** _preencher_
+- **Alternativas:** Nenhuma.
+- **Consequências:** Nenhuma.
 
 ## 002 — Fastify + Zod na API
 
 - **Status:** aceita
-- **Contexto:** _preencher_
+- **Contexto:** API precisa de validação de rotas e schemas de request/response, tipados no TypeScript.
 - **Decisão:** Fastify 5 com `fastify-type-provider-zod` para tipar e validar rotas.
-- **Alternativas:** _preencher (Express? Hono? NestJS?)_
-- **Consequências:** _preencher_
+- **Alternativas:** - Express (descartado: menos performático, menos tipado, menos plugins)
+- **Consequências:** - validação de rotas e schemas de request/response com Zod, tipados no TypeScript
 
 ## 003 — Um database do Notion por nível
 
 - **Status:** aceita
 - **Contexto:** Ano, Trimestre, Mês, Semana e Dia têm propriedades diferentes.
 - **Decisão:** cada nível tem seu próprio database; IDs nas variáveis `*_DATABASE_ID` (antes `*_TOKEN`; ver 010).
-- **Alternativas:** _preencher_
-- **Consequências:** _preencher_
+- **Alternativas:** Nenhuma.
+- **Consequências:** Nenhuma.
 
 ## 004 — Portas separadas para API e Web
 
