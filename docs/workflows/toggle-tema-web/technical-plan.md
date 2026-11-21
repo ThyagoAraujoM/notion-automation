@@ -18,10 +18,10 @@ Sem contratos públicos afetados (só front).
 
 ## Incrementos
 
-| #   | Mudança                      | Testes previstos                                    | Critérios | Pronto quando                       | Status |
-| --- | ---------------------------- | --------------------------------------------------- | --------- | ----------------------------------- | ------ |
-| 1   | Componente, script e layout  | verificação manual no navegador (sem runner no web) | CA1–CA5   | portão verde e conferido no browser | ✅     |
-| 2   | Docs (ADR, PF-012 resolvida) | —                                                   | —         | docs coerentes                      | ✅     |
+| #   | Mudança                      | Testes previstos                                    | Critérios | Pronto quando                       | Status       |
+| --- | ---------------------------- | --------------------------------------------------- | --------- | ----------------------------------- | ------------ |
+| 1   | Componente, script e layout  | verificação manual no navegador (sem runner no web) | CA1–CA5   | portão verde e conferido no browser | ✅ `b9f18ba` |
+| 2   | Docs (ADR, PF-012 resolvida) | —                                                   | —         | docs coerentes                      | ✅ `b9f18ba` |
 
 ## Validação
 
@@ -35,4 +35,5 @@ Sem contratos públicos afetados (só front).
 ## Acompanhamento
 
 - 2026-11-20 — Conferido no navegador: alterna, persiste ao recarregar, mobile ok. Bug achado: constante exportada de módulo `"use client"` virou referência no layout (servidor); movida para `apps/web/lib/theme.ts`.
+- 2026-11-20 — Revisão: `color-scheme` corrigido em `350aadb`. Os incrementos 1 e 2 entraram num commit só.
 - 2026-11-20 — Web sem runner de testes: validação manual registrada aqui.
