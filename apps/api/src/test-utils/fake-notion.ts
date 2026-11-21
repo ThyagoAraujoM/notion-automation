@@ -2,6 +2,10 @@
 // helpers e os services usam: databases.retrieve, dataSources.query/listTemplates e
 // pages.create/update. Os testes fazem `vi.mock("@/integrations/notion/client")` e
 // devolvem `fakeNotion.client`.
+//
+// Limites conhecidos: não valida os nomes das colunas contra o schema do database (o
+// contrato dos nomes está em `year-pages.test.ts`) e não pagina (`has_more` é sempre
+// falso; a paginação é coberta em `helpers.test.ts` e no E2E).
 import { env } from "@notion-automation/env";
 import type { YearPlan } from "@/utils/routine-calendar";
 
@@ -14,6 +18,8 @@ export type FakePage = {
   databaseId: string;
   properties: Record<string, Json>;
   in_trash: boolean;
+  /** Template pedido na criação (`pages.create`) */
+  template: Json | undefined;
 };
 
 type TemplateNames = Record<string, string[]>;
@@ -117,15 +123,17 @@ export function createFakeNotion() {
       create: async ({
         parent,
         properties,
+        template,
       }: {
         parent: { database_id: string };
         properties: Record<string, Json>;
+        template?: Json;
       }) => {
         createCalls++;
         if (failOnCreate && createCalls === failOnCreate.at) {
           throw failOnCreate.error;
         }
-        const page = addPage(parent.database_id, properties);
+        const page = addPage(parent.database_id, properties, template);
         return { id: page.id };
       },
       update: async ({
@@ -145,6 +153,9 @@ export function createFakeNotion() {
           }
         }
         if (in_trash) {
+          // O Notion real recusa alterar uma página que já está na lixeira
+          if (page.in_trash)
+            throw new Error(`Página já está na lixeira: ${page_id}`);
           page.in_trash = true;
           trashed.push(page_id);
         }
@@ -153,7 +164,11 @@ export function createFakeNotion() {
     },
   };
 
-  function addPage(databaseId: string, properties: Record<string, Json>) {
+  function addPage(
+    databaseId: string,
+    properties: Record<string, Json>,
+    template?: Json,
+  ) {
     const page: FakePage = {
       object: "page",
       id: `page-${nextId++}`,
@@ -162,6 +177,7 @@ export function createFakeNotion() {
         Object.entries(properties).map(([k, v]) => [k, toReadProperty(v)]),
       ),
       in_trash: false,
+      template,
     };
     pages.push(page);
     return page;

@@ -108,3 +108,96 @@ describe("createYear", () => {
     expect(fakeNotion.all().every((p) => p.in_trash)).toBe(true);
   });
 });
+
+describe("createYear — recorte que cruza mês e trimestre", () => {
+  const wideFrom = "2090-09-25";
+  const wide = buildPlan(YEAR, wideFrom);
+
+  beforeEach(() => {
+    fakeNotion.setTemplates(templatesFor(wide));
+  });
+
+  it("liga trimestre, mês, semana e dia exatamente ao pai que o plano manda", async () => {
+    await createYear(YEAR, wideFrom);
+
+    const quarters = fakeNotion.live(env.QUARTER_DATABASE_ID);
+    const months = fakeNotion.live(env.MONTH_DATABASE_ID);
+    const weeks = fakeNotion.live(env.WEEK_DATABASE_ID);
+    const days = fakeNotion.live(env.DAY_DATABASE_ID);
+    // As páginas são criadas na ordem do plano
+    expect(quarters.map(nameOf)).toEqual(wide.quarters.map((q) => q.name));
+    expect(months.map(nameOf)).toEqual(wide.months.map((m) => m.name));
+    expect(weeks).toHaveLength(wide.weeks.length);
+    expect(days).toHaveLength(wide.days.length);
+
+    wide.months.forEach((m, i) => {
+      expect(relationOf(months[i]!, "Trimestres")).toEqual([
+        quarters[m.quarterIndex]!.id,
+      ]);
+    });
+    wide.weeks.forEach((w, i) => {
+      // monthIndex < 0: a semana começou antes do recorte e liga ao 1º mês
+      expect(relationOf(weeks[i]!, "Meses")).toEqual([
+        months[Math.max(w.monthIndex, 0)]!.id,
+      ]);
+    });
+    wide.days.forEach((d, i) => {
+      expect(relationOf(days[i]!, "Semana")).toEqual([weeks[d.weekIndex]!.id]);
+    });
+  });
+
+  it("preenche as propriedades de conteúdo e o template de cada página", async () => {
+    await createYear(YEAR, wideFrom);
+
+    const days = fakeNotion.live(env.DAY_DATABASE_ID);
+    wide.days.forEach((d, i) => {
+      expect(nameOf(days[i]!)).toBe(d.name);
+      expect(days[i]!.properties["Dia Nº"]).toMatchObject({
+        number: d.weekdayNumber,
+      });
+      expect(days[i]!.properties.Data).toMatchObject({
+        date: { start: d.date },
+      });
+      expect(days[i]!.template).toEqual({
+        type: "template_id",
+        template_id: `tpl:${d.name}`,
+      });
+    });
+    const months = fakeNotion.live(env.MONTH_DATABASE_ID);
+    wide.months.forEach((m, i) => {
+      expect(months[i]!.properties["Nº do mês"]).toMatchObject({
+        number: m.number,
+      });
+      expect(months[i]!.template).toEqual({
+        type: "template_id",
+        template_id: `tpl:${m.name}`,
+      });
+    });
+    const weeks = fakeNotion.live(env.WEEK_DATABASE_ID);
+    wide.weeks.forEach((w, i) => {
+      expect(weeks[i]!.properties["Semana nº"]).toMatchObject({
+        number: w.number,
+      });
+    });
+    // O ano usa o template padrão do database
+    expect(fakeNotion.live(env.YEAR_DATABASE_ID)[0]!.template).toEqual({
+      type: "default",
+    });
+  });
+
+  it("o erro original sobe mesmo que enviar para a lixeira também falhe", async () => {
+    const boom = new Error("Notion fora do ar");
+    fakeNotion.failCreateAt(3, boom);
+    // Páginas já na lixeira fazem o update falhar: simula a lixeira indisponível
+    const original = fakeNotion.client.pages.update;
+    fakeNotion.client.pages.update = async () => {
+      throw new Error("lixeira indisponível");
+    };
+
+    try {
+      await expect(createYear(YEAR, wideFrom)).rejects.toBe(boom);
+    } finally {
+      fakeNotion.client.pages.update = original;
+    }
+  });
+});

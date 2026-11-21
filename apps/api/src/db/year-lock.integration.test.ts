@@ -1,6 +1,7 @@
 // Integração com o Postgres real: prova que a chave primária impede duas travas do mesmo
 // ano. Rode com `pnpm db:up` e `pnpm --filter=@notion-automation/api test:integration`.
 // Só mexe nos anos 2091–2093 (fora do uso real) e nunca chama `clearYearLocks`.
+import { env } from "@notion-automation/env";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { prisma } from "./prisma";
 import {
@@ -13,7 +14,15 @@ const YEARS = [2091, 2092, 2093];
 const cleanup = () =>
   prisma.yearOperationLock.deleteMany({ where: { year: { in: YEARS } } });
 
-beforeAll(cleanup);
+beforeAll(() => {
+  // Segurança: o teste apaga linhas; só roda contra um Postgres local
+  if (!["localhost", "127.0.0.1", "::1"].includes(env.POSTGRES_HOST)) {
+    throw new Error(
+      `Teste de integração só roda em Postgres local (POSTGRES_HOST=${env.POSTGRES_HOST}).`,
+    );
+  }
+  return cleanup();
+});
 afterEach(cleanup);
 afterAll(async () => {
   await cleanup();

@@ -103,3 +103,48 @@ describe("repairYear", () => {
     expect(relationOf(day, "Semana")).toEqual([correctWeek]);
   });
 });
+
+describe("repairYear — religação de semanas e meses", () => {
+  const wideFrom = "2090-09-25";
+  const wide = buildPlan(YEAR, wideFrom);
+
+  beforeEach(() => {
+    fakeNotion.setTemplates(templatesFor(wide));
+  });
+
+  it("religa uma semana ligada ao mês errado", async () => {
+    await createYear(YEAR, wideFrom);
+    const months = fakeNotion.live(env.MONTH_DATABASE_ID);
+    // 1ª semana cujo mês está dentro do recorte (monthIndex >= 0)
+    const index = wide.weeks.findIndex((w) => w.monthIndex >= 0);
+    const week = fakeNotion.live(env.WEEK_DATABASE_ID)[index]!;
+    const correct = relationOf(week, "Meses")[0]!;
+    const wrong = months.find((m) => m.id !== correct)!;
+    await fakeNotion.client.pages.update({
+      page_id: week.id,
+      properties: { Meses: { relation: [{ id: wrong.id }] } },
+    });
+
+    const result = await repairYear(YEAR, wideFrom);
+
+    expect(result.relinked).toEqual({ months: 0, weeks: 1, days: 0 });
+    expect(relationOf(week, "Meses")).toEqual([correct]);
+  });
+
+  it("religa um mês ligado ao trimestre errado", async () => {
+    await createYear(YEAR, wideFrom);
+    const quarters = fakeNotion.live(env.QUARTER_DATABASE_ID);
+    const month = fakeNotion.live(env.MONTH_DATABASE_ID)[0]!;
+    const correct = relationOf(month, "Trimestres")[0]!;
+    const wrong = quarters.find((q) => q.id !== correct)!;
+    await fakeNotion.client.pages.update({
+      page_id: month.id,
+      properties: { Trimestres: { relation: [{ id: wrong.id }] } },
+    });
+
+    const result = await repairYear(YEAR, wideFrom);
+
+    expect(result.relinked.months).toBe(1);
+    expect(relationOf(month, "Trimestres")).toEqual([correct]);
+  });
+});
