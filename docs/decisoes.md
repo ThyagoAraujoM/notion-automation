@@ -118,7 +118,7 @@
 - **Contexto:** `apps/web` ainda era o template do create-turbo (e `packages/ui` só existia para ele).
 - **Decisão:** landing page em `app/(home)/` (route group com `_components/` por seção), Tailwind 4 via `@tailwindcss/postcss`, componentes shadcn em `components/ui`. `packages/ui` e `meta.json` removidos.
 - **Alternativas:** manter `packages/ui` com os componentes shadcn (descartado por ora: só um app consome; volta a fazer sentido se surgir um segundo front).
-- **Consequências:** dark mode do shadcn é por classe (`.dark`), sem alternador ainda.
+- **Consequências:** dark mode do shadcn é por classe (`.dark`). O alternador (`ThemeToggle`, canto superior direito) chegou na demanda `toggle-tema-web` (PF-012): script inline no `<head>` aplica a classe antes da pintura (`localStorage` `theme`, senão `prefers-color-scheme`), sem `next-themes`.
 
 ## 013 — Workflows como skills, branch por demanda e squash merge
 
