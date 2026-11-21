@@ -2,9 +2,9 @@
 
 - **Slug:** `toggle-tema-web`
 - **Tipo:** feature
-- **Status:** em revisão
+- **Status:** concluída
 - **Branch:** `feat/toggle-tema-web`
-- **PR:** —
+- **PR:** [#13](https://github.com/ThyagoAraujoM/notion-automation/pull/13)
 - **Criada em:** 2026-11-20
 
 ## Objetivo
