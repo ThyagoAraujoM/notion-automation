@@ -1,5 +1,5 @@
 import { fileURLToPath } from "node:url";
-import { defineConfig } from "vitest/config";
+import { configDefaults, defineConfig } from "vitest/config";
 
 export default defineConfig({
   resolve: {
@@ -8,6 +8,8 @@ export default defineConfig({
   },
   test: {
     include: ["src/**/*.test.ts"],
+    // Integração com Postgres real roda à parte (`test:integration`), nunca no portão/CI
+    exclude: [...configDefaults.exclude, "src/**/*.integration.test.ts"],
     environment: "node",
     // Valores falsos só para o `@notion-automation/env` validar ao ser importado.
     // Os testes não falam com o Notion nem com o Postgres (services e db são mockados).

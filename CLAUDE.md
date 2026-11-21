@@ -34,6 +34,7 @@ pnpm format
 pnpm db:up                                  # sobe o Postgres (Docker); db:down / db:logs
 pnpm --filter=@notion-automation/api db:migrate   # nova migration em dev
 pnpm --filter=@notion-automation/api test:watch   # Vitest em modo watch
+pnpm --filter=@notion-automation/api test:integration  # trava por ano no Postgres real (precisa de db:up); fora do portão e do CI
 pnpm --filter=@notion-automation/api test:e2e     # create → repair → delete num ano avulso (2090), ~5 min, no Notion real
 ```
 
