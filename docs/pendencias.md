@@ -14,7 +14,7 @@
 
 | ID     | Data       | Como                                                                                                                                                                                                                     |
 | ------ | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| PF-016 | 2026-11-20 | no shutdown (`SIGINT`/`SIGTERM`) os jobs do processo viram `failed` e as travas são soltas, sem esperar; gravação do desfecho retentada, demanda `jobs-ano-shutdown`, PR a definir                                       |
+| PF-016 | 2026-11-20 | no shutdown (`SIGINT`/`SIGTERM`) os jobs do processo viram `failed` e as travas são soltas, sem esperar; gravação do desfecho retentada, demanda `jobs-ano-shutdown`, PR #14                                             |
 | PF-012 | 2026-11-20 | botão de tema (lua/sol) no canto superior direito da landing, com persistência e `prefers-color-scheme`, demanda `toggle-tema-web`, PR #13                                                                               |
 | PF-010 | 2026-11-20 | ADRs 001–003 de `docs/decisoes.md` com alternativas e consequências preenchidas                                                                                                                                          |
 | PF-013 | 2026-11-20 | `GET /databases/:databaseId/schema` testada contra o Notion real: 200 com ID em minúsculas, com e sem hífens. O erro visto antes era página desatualizada. Nota: ID em maiúsculas passa no regex e o Notion responde 400 |

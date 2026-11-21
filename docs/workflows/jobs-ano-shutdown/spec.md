@@ -4,7 +4,7 @@
 - **Tipo:** bugfix
 - **Status:** concluída
 - **Branch:** `fix/jobs-ano-shutdown`
-- **PR:** —
+- **PR:** [#14](https://github.com/ThyagoAraujoM/notion-automation/pull/14)
 - **Criada em:** 2026-11-20
 
 ## Objetivo
