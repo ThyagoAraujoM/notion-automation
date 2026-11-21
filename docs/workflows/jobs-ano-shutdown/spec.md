@@ -2,7 +2,7 @@
 
 - **Slug:** `jobs-ano-shutdown`
 - **Tipo:** bugfix
-- **Status:** em revisão
+- **Status:** concluída
 - **Branch:** `fix/jobs-ano-shutdown`
 - **PR:** —
 - **Criada em:** 2026-11-20
