@@ -172,7 +172,7 @@
 - **Contexto:** o portão (`lint`, `check-types`, `test`) dependia de alguém lembrar de rodar, e o fluxo já usa PR com merge commit (`PF-002`).
 - **Decisão:** um workflow com um job que instala com `--frozen-lockfile` e roda `lint`, `check-types`, `test` e `build`, em `pull_request` e `push` na `main`, com `permissions: contents: read`. Node 22 (o Prisma 7 exige >= 20.19). Sem secrets, sem Postgres, sem E2E.
 - **Alternativas:** um job por etapa (reinstala as dependências em cada um, sem ganho num repositório pequeno); rodar o E2E (~5 min e escreve no Notion real); `services: postgres` (os testes atuais não usam banco, ver `PF-006`); só hook local (não pega o que escapa da máquina nem protege o PR).
-- **Consequências:** todo PR mostra o check verde ou vermelho. Para bloquear o merge é preciso ativar a branch protection exigindo o check (configuração do GitHub, fora do repositório). Quando o `PF-006` trouxer teste de integração com Postgres, o job ganha um `services:`. **Para novos projetos:** criar o workflow junto com o primeiro teste, e alinhar o Node do CI com o `engines`.
+- **Consequências:** todo PR mostra o check verde ou vermelho. Para bloquear o merge é preciso ativar a branch protection exigindo o check (configuração do GitHub, fora do repositório). O teste de integração do `PF-006` (`test:integration`) ficou fora do CI; para rodá-lo lá, o job ganha um `services:` com Postgres e `db:deploy`. **Para novos projetos:** criar o workflow junto com o primeiro teste, e alinhar o Node do CI com o `engines`.
 
 ## 019 — Build da API com tsup, um bundle único
 

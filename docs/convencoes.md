@@ -98,7 +98,13 @@ A API é pensada para o público internacional, e a documentação (Swagger) ser
 - **Testar operação em segundo plano (202):** a resposta volta antes de o job terminar. Para checar o desfecho, `await settleYearJobs()` (`@/http/year-job`) e leia o que foi passado ao `finishYearJob` mockado. Nunca use `setTimeout`/`sleep`. Para provar que a rota não espera o service, devolva uma promise controlada pelo teste e só resolva depois de conferir o 202.
 - **Mockar o Notion:** `vi.mock("./client", () => ({ notion: { ... só os métodos usados: vi.fn() } }))` e `vi.mocked(notion.x.y).mockImplementation(...)`. Erros do client: `new RequestTimeoutError()` (504) e `new APIResponseError({ code, status, message, headers: new Headers(), rawBodyText: "", additional_data: undefined, request_id: undefined })`.
 - **Prisma:** nunca é chamado nos testes; mocke o módulo de `db/` que a rota usa.
-- Services (`create-year`, `repair-year`, `delete-year`) e a trava real (`acquireYearLock` + Postgres) ainda não têm teste unitário; a orquestração dos services é coberta pelo E2E. Todo teste que usa `buildApp` mocka `@/db/operation-log`, `@/db/year-job` e `@/services/shared/year-lock`, mesmo sem chamar rotas de `/years`.
+- Todo teste que usa `buildApp` mocka `@/db/operation-log`, `@/db/year-job` e `@/services/shared/year-lock`, mesmo sem chamar rotas de `/years`.
+- **Testar service:** `test-utils/fake-notion.ts` é um Notion falso em memória (`databases.retrieve`, `dataSources.query/listTemplates`, `pages.create/update`) que guarda as páginas, aplica os filtros usados e permite `seed`, `setTemplates(templatesFor(plan))`, `failCreateAt(n, erro)` e `trashed`. O teste faz `vi.mock("@/integrations/notion/client", () => ({ get notion() { return fakeNotion.client; } }))` (o getter adia o acesso, porque o `vi.mock` é içado acima dos imports), chama `fakeNotion.reset()` no `beforeEach` e usa um recorte pequeno (`from: "2090-12-20"`). Exemplos: `services/create-year.test.ts`, `repair-year.test.ts`, `delete-year.test.ts`.
+- **Trava:** `db/year-lock.test.ts` (Prisma mockado: P2002, TTL) e `services/shared/year-lock.test.ts` (`OperationInProgressError`, `release` que não lança).
+
+### Integração com Postgres (fora do portão)
+
+`pnpm db:up` e depois `pnpm --filter=@notion-automation/api test:integration`. Roda `src/**/*.integration.test.ts` com o Postgres real e as variáveis do arquivo de ambiente (config em `apps/api/vitest.integration.config.mts`); o `pnpm test` e o CI **não** rodam esses arquivos. Hoje: `db/year-lock.integration.test.ts` (corrida entre aquisições do mesmo ano, liberação e TTL). Usa só os anos 2091–2093 e limpa só esses. Ao rodar no CI será preciso `services: postgres` e `db:deploy`.
 
 ### E2E no Notion real
 

@@ -2,7 +2,7 @@
 
 - **Slug:** `testes-services-e-trava`
 - **Tipo:** test
-- **Status:** em andamento
+- **Status:** em revisão
 - **Branch:** `test/testes-services-e-trava`
 - **PR:** —
 - **Criada em:** 2026-11-20
@@ -19,12 +19,12 @@ Cobrir com testes rápidos a orquestração dos services `createYear`, `repairYe
 
 ## Critérios de aceitação
 
-- [ ] **CA1** — `createYear`: lança `YearAlreadyExistsError` sem criar nada se o ano existe; cria ano → trimestres → meses → semanas → dias com os pais certos e devolve as contagens; se uma criação falha, manda para a lixeira o que já criou e propaga o erro; templates faltando falham antes de criar.
-- [ ] **CA2** — `repairYear`: lança `YearNotFoundError` se o ano não existe; não cria nem religa nada quando tudo está correto; cria o que falta; religa o que está com pai errado.
-- [ ] **CA3** — `deleteYear`: lança `YearNotFoundError` se o ano não existe; manda para a lixeira dias → semanas → meses → trimestres → ano e devolve as contagens.
-- [ ] **CA4** — Trava (unitário, Prisma mockado): adquire quando livre; com `P2002` devolve `acquired: false` e quem segura; descarta travas vencidas pelo TTL; `acquireYearLock` lança `OperationInProgressError` e o `release` nunca lança.
-- [ ] **CA5** — Teste de integração com Postgres real (`pnpm --filter=@notion-automation/api test:integration`), fora do `pnpm test` e do CI: duas aquisições simultâneas do mesmo ano, só uma vence; liberar permite adquirir de novo; trava vencida é reaproveitada.
-- [ ] **CA6** — Portão verde e docs atualizadas (`docs/convencoes.md`, `CLAUDE.md`, `PF-006` resolvida).
+- [x] **CA1** — `createYear`: lança `YearAlreadyExistsError` sem criar nada se o ano existe; cria ano → trimestres → meses → semanas → dias com os pais certos e devolve as contagens; se uma criação falha, manda para a lixeira o que já criou e propaga o erro; templates faltando falham antes de criar.
+- [x] **CA2** — `repairYear`: lança `YearNotFoundError` se o ano não existe; não cria nem religa nada quando tudo está correto; cria o que falta; religa o que está com pai errado.
+- [x] **CA3** — `deleteYear`: lança `YearNotFoundError` se o ano não existe; manda para a lixeira dias → semanas → meses → trimestres → ano e devolve as contagens.
+- [x] **CA4** — Trava (unitário, Prisma mockado): adquire quando livre; com `P2002` devolve `acquired: false` e quem segura; descarta travas vencidas pelo TTL; `acquireYearLock` lança `OperationInProgressError` e o `release` nunca lança.
+- [x] **CA5** — Teste de integração com Postgres real (`pnpm --filter=@notion-automation/api test:integration`), fora do `pnpm test` e do CI: duas aquisições simultâneas do mesmo ano, só uma vence; liberar permite adquirir de novo; trava vencida é reaproveitada.
+- [x] **CA6** — Portão verde e docs atualizadas (`docs/convencoes.md`, `CLAUDE.md`, `PF-006` resolvida).
 
 ## Fora de escopo
 

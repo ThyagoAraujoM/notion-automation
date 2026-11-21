@@ -37,12 +37,13 @@ Regras sempre carregadas: `.claude/rules/git-workflow.md` (branches, commits, me
 
 ## Demandas
 
-| Slug                                                          | Tipo    | Status    |
-| ------------------------------------------------------------- | ------- | --------- |
-| [workflows-skills](./workflows-skills/)                       | chore   | concluída |
-| [log-operacoes-postgres-host](./log-operacoes-postgres-host/) | feature | concluída |
-| [regra-merge-commit](./regra-merge-commit/)                   | docs    | concluída |
-| [gitattributes-eol](./gitattributes-eol/)                     | chore   | concluída |
-| [years-jobs-assincronos](./years-jobs-assincronos/)           | feature | concluída |
-| [ci-github-actions](./ci-github-actions/)                     | chore   | concluída |
-| [guardrails-env-idioma](./guardrails-env-idioma/)             | chore   | concluída |
+| Slug                                                          | Tipo    | Status     |
+| ------------------------------------------------------------- | ------- | ---------- |
+| [workflows-skills](./workflows-skills/)                       | chore   | concluída  |
+| [log-operacoes-postgres-host](./log-operacoes-postgres-host/) | feature | concluída  |
+| [regra-merge-commit](./regra-merge-commit/)                   | docs    | concluída  |
+| [gitattributes-eol](./gitattributes-eol/)                     | chore   | concluída  |
+| [years-jobs-assincronos](./years-jobs-assincronos/)           | feature | concluída  |
+| [ci-github-actions](./ci-github-actions/)                     | chore   | concluída  |
+| [guardrails-env-idioma](./guardrails-env-idioma/)             | chore   | concluída  |
+| [testes-services-e-trava](./testes-services-e-trava/)         | test    | em revisão |
