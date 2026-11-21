@@ -78,3 +78,63 @@ describe("failRunningYearJobs", () => {
     expect(release).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("gravação do desfecho do job", () => {
+  /** Inicia um job que termina na hora com sucesso e espera ele acabar (com timers falsos). */
+  async function runJobToEnd() {
+    vi.mocked(createYearJob).mockResolvedValueOnce({ id: "job-9" } as never);
+    await startYearJob({
+      request,
+      year: 2093,
+      operation: "deleteYear",
+      params: {},
+      log,
+      run: async () => undefined,
+      toOutcome: () => ({
+        statusCode: 200,
+        body: { success: true, message: "ok" },
+      }),
+    });
+    await vi.runAllTimersAsync();
+    await settleYearJobs();
+  }
+
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  it("retenta e para quando uma tentativa dá certo (CA3)", async () => {
+    vi.mocked(finishYearJob)
+      .mockRejectedValueOnce(new Error("conexão caiu"))
+      .mockResolvedValue({} as never);
+
+    await runJobToEnd();
+
+    expect(finishYearJob).toHaveBeenCalledTimes(2);
+    expect(finishYearJob).toHaveBeenLastCalledWith(
+      "job-9",
+      expect.objectContaining({ status: "succeeded" }),
+    );
+    expect(release).toHaveBeenCalledTimes(1);
+  });
+
+  it("esgotadas as tentativas, marca o job como failed (CA3)", async () => {
+    vi.mocked(finishYearJob)
+      .mockRejectedValueOnce(new Error("1"))
+      .mockRejectedValueOnce(new Error("2"))
+      .mockRejectedValueOnce(new Error("3"))
+      .mockResolvedValue({} as never);
+
+    await runJobToEnd();
+
+    expect(finishYearJob).toHaveBeenCalledTimes(4);
+    expect(finishYearJob).toHaveBeenLastCalledWith(
+      "job-9",
+      expect.objectContaining({
+        status: "failed",
+        statusCode: 500,
+        result: expect.objectContaining({ success: false }),
+      }),
+    );
+    expect(release).toHaveBeenCalledTimes(1);
+  });
+});
