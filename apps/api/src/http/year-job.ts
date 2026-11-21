@@ -1,6 +1,6 @@
 import type { FastifyRequest } from "fastify";
 import type { InputJsonValue } from "@/generated/prisma/internal/prismaNamespace";
-import { createYearJob, finishYearJob } from "@/db/year-job";
+import { createYearJob, failYearJobs, finishYearJob } from "@/db/year-job";
 import type { YearOperation } from "@/db/year-lock";
 import { acquireYearLock } from "@/services/shared/year-lock";
 import { toHttpError, type KnownErrorStatus } from "./errors";
@@ -13,8 +13,14 @@ export type JobOutcome<S extends number = number> = {
   error?: unknown;
 };
 
-/** Jobs em andamento neste processo (ver `settleYearJobs`). */
-const running = new Set<Promise<unknown>>();
+/**
+ * Jobs em andamento neste processo, por id: a promessa (ver `settleYearJobs`) e a função que
+ * solta a trava do ano (ver `failRunningYearJobs`).
+ */
+const running = new Map<
+  string,
+  { job: Promise<unknown>; release: () => Promise<void> }
+>();
 
 /**
  * Aceita uma operação de ano e a executa em segundo plano.
@@ -40,7 +46,15 @@ export async function startYearJob<T>(options: {
 }): Promise<{ jobId: string }> {
   const { request, year, operation, params, log, run, toOutcome } = options;
 
-  const release = await acquireYearLock(year, operation);
+  const releaseLock = await acquireYearLock(year, operation);
+  // Idempotente: o shutdown e o fim do job podem soltar a mesma trava, e `releaseYearLock`
+  // apaga pelo ano, não pelo dono (a segunda chamada poderia apagar a trava de outra operação).
+  let released = false;
+  const release = async () => {
+    if (released) return;
+    released = true;
+    await releaseLock();
+  };
 
   let jobId: string;
   try {
@@ -62,14 +76,18 @@ export async function startYearJob<T>(options: {
         request.log.error(outcome.error, `Erro inesperado no job ${jobId}`);
       }
 
-      await finishYearJob(jobId, {
-        status: outcome.statusCode < 400 ? "succeeded" : "failed",
-        statusCode: outcome.statusCode,
-        result: outcome.body,
-        error: errorMessage(outcome.error),
-        finishedAt: new Date(),
-      }).catch((e) =>
-        request.log.error(e, `Falha ao finalizar o job ${jobId}`),
+      // Se o shutdown já marcou o job como `failed` e o job terminar antes de o processo sair,
+      // o desfecho real sobrescreve a marca de interrupção: é intencional (é o que de fato houve).
+      await saveOutcome(
+        jobId,
+        {
+          status: outcome.statusCode < 400 ? "succeeded" : "failed",
+          statusCode: outcome.statusCode,
+          result: outcome.body,
+          error: errorMessage(outcome.error),
+          finishedAt: new Date(),
+        },
+        request.log,
       );
       await log(outcome.statusCode, outcome.body, outcome.error);
     } finally {
@@ -80,10 +98,54 @@ export async function startYearJob<T>(options: {
   // Sem `await`: a requisição responde 202 e o job segue no event loop deste processo.
   const job: Promise<unknown> = execute()
     .catch((error) => request.log.error(error, `Falha no job ${jobId}`))
-    .finally(() => running.delete(job));
-  running.add(job);
+    .finally(() => running.delete(jobId));
+  running.set(jobId, { job, release });
 
   return { jobId };
+}
+
+/** Tentativas de gravar o desfecho do job e espera (multiplicada pela tentativa) entre elas. */
+const SAVE_ATTEMPTS = 3;
+const SAVE_RETRY_DELAY_MS = 500;
+
+const SAVE_FAILED_MESSAGE =
+  "A operação terminou, mas não foi possível gravar o resultado. Use POST /years/:year/repair para conferir o ano.";
+
+/**
+ * Grava o desfecho do job, retentando se o banco falhar. Esgotadas as tentativas, grava um
+ * `failed` genérico (para o polling não ficar em `running`); se nem isso gravar, só loga
+ * (o boot seguinte marca o job como falho).
+ */
+async function saveOutcome(
+  jobId: string,
+  data: Parameters<typeof finishYearJob>[1],
+  logger: FastifyRequest["log"],
+) {
+  for (let attempt = 1; attempt <= SAVE_ATTEMPTS; attempt++) {
+    try {
+      await finishYearJob(jobId, data);
+      return;
+    } catch (error) {
+      logger.error(
+        error,
+        `Falha ao finalizar o job ${jobId} (tentativa ${attempt}/${SAVE_ATTEMPTS})`,
+      );
+      if (attempt < SAVE_ATTEMPTS) {
+        await new Promise((resolve) =>
+          setTimeout(resolve, SAVE_RETRY_DELAY_MS * attempt),
+        );
+      }
+    }
+  }
+  await finishYearJob(jobId, {
+    status: "failed",
+    statusCode: 500,
+    result: { success: false, message: SAVE_FAILED_MESSAGE },
+    error: "falha ao gravar o desfecho do job",
+    finishedAt: new Date(),
+  }).catch((error) =>
+    logger.error(error, `Não foi possível marcar o job ${jobId} como falho`),
+  );
 }
 
 /**
@@ -134,7 +196,24 @@ export function acceptedBody(
  * desfecho de um job sem depender de tempo (`setTimeout`).
  */
 export async function settleYearJobs() {
-  while (running.size > 0) await Promise.all(running);
+  while (running.size > 0)
+    await Promise.all([...running.values()].map(({ job }) => job));
+}
+
+/**
+ * Para o shutdown: marca como `failed` os jobs em andamento **deste processo** e solta as
+ * travas dos anos, sem esperar os jobs terminarem (levam minutos e o orquestrador manda
+ * `SIGKILL` em segundos). Só altera jobs ainda `running`. Se gravar a falha der erro, as
+ * travas são soltas assim mesmo e o erro sobe (o boot seguinte ainda corrige o job).
+ */
+export async function failRunningYearJobs() {
+  const jobs = [...running.entries()];
+  if (jobs.length === 0) return;
+  try {
+    await failYearJobs(jobs.map(([id]) => id));
+  } finally {
+    await Promise.all(jobs.map(([, { release }]) => release()));
+  }
 }
 
 function errorMessage(error: unknown) {

@@ -31,11 +31,11 @@ HTTP ─▶ src/http/server.ts (listen) ─▶ src/http/app.ts (buildApp) ─▶
           (registra plugins)    (valida com Zod, responde)    (regra de negócio)          (cliente singleton)
 ```
 
-- **`src/http/app.ts`**: `buildApp()` monta o Fastify (error handler, Swagger, rotas) sem abrir porta nem tocar no banco; usado pelo `server.ts` e pelos testes (`app.inject`). O `server.ts` só adiciona o fechamento do Prisma, limpa as travas, marca como falhos os jobs interrompidos e chama `listen`.
+- **`src/http/app.ts`**: `buildApp()` monta o Fastify (error handler, Swagger, rotas) sem abrir porta nem tocar no banco; usado pelo `server.ts` e pelos testes (`app.inject`). O `server.ts` só adiciona o fechamento (marca os jobs em andamento como falhos e desconecta o Prisma), os handlers de `SIGINT`/`SIGTERM`, limpa as travas, marca como falhos os jobs interrompidos e chama `listen`.
 - **Rotas** (`src/http/routes/<recurso>/`): só HTTP — schema Zod, status code, formato da resposta. Uma pasta por recurso REST (`years/`, `databases/`) com `index.ts` registrando as rotas do recurso.
   - **`src/http/schemas/common.ts`**: schemas Zod repetidos (`errorResponse`, `yearParams`, `flagSchema`, `levelCounts`, `yearOperation`, `jobAccepted`).
   - **`src/http/errors.ts`**: `toHttpError` traduz erros de domínio em 400/404/409/422/504, limitado aos status que a rota declara.
-  - **`src/http/year-job.ts`**: `startYearJob` (trava, grava o job e roda a operação em segundo plano), `failureOutcome`, `acceptedBody` e `settleYearJobs` (testes). Ver [Operações em segundo plano](#operações-em-segundo-plano-jobs).
+  - **`src/http/year-job.ts`**: `startYearJob` (trava, grava o job e roda a operação em segundo plano), `failureOutcome`, `acceptedBody`, `failRunningYearJobs` (shutdown) e `settleYearJobs` (testes). Ver [Operações em segundo plano](#operações-em-segundo-plano-jobs).
 - **services** (`src/services/`): casos de uso (regra de negócio). Não conhece Fastify.
   - **`services/shared/`**: peças reutilizadas por mais de um caso de uso e que fazem I/O no Notion — `errors.ts` (`YearNotFoundError`, `YearAlreadyExistsError`), `year-pages.ts` (propriedades de cada nível, `createPage`, `prepareTemplates`, `trashPages`) e `year-hierarchy.ts` (`queryChildrenOf`, `collectYearHierarchy`: trimestres → meses → semanas → dias de um ano). Se duas funções de `services/` precisam do mesmo código, ele vai para cá.
 - **utils** (`src/utils/`): lógica pura, sem I/O (`routine-calendar.ts` = calendário, com testes em `routine-calendar.test.ts`; `notion-pages.ts` = `normId`, `uniqueById`, `indexBy`, `matchNumber`).
@@ -139,7 +139,10 @@ cliente ── GET /years/jobs/:jobId (polling a cada 5–10 s) ──▶ lê ye
 - **O que continua síncrono** (resposta direta, sem job): 400 do Zod, 400 de `startToday` fora do ano atual (a rota chama `buildPlan`, que é puro, antes de aceitar) e 409 de operação em andamento (a trava é obtida antes do 202). Falha ao gravar o job → 500 e a trava é solta.
 - **O que vai para o job:** tudo que depende do Notion — 409 "ano já existe", 404 "ano não existe", 422 templates, 504 timeout e 500 inesperado (a mensagem interna fica só em `year_job.error` e `operation_log.error`).
 - **Nunca derruba o processo:** a promise do job termina num `.catch` que só loga; falha ao gravar o job ou o log não impede soltar a trava (`finally`).
-- **API reiniciou no meio** (deploy, crash, `tsx watch`): a operação para onde estava. Ao subir, `failInterruptedYearJobs` marca os jobs `running` como `failed` (500, mensagem sugerindo `repair` ou `DELETE`), junto com `clearYearLocks`. Só funciona porque há **uma instância** da API.
+- **API encerrada no meio** (`SIGINT`/`SIGTERM`: deploy, `tsx watch`): o `server.ts` chama `app.close()`, e o `onClose` executa `failRunningYearJobs` **sem esperar os jobs** (levam minutos; o orquestrador manda `SIGKILL` em segundos): marca como `failed` os jobs deste processo que ainda estão `running` (`failYearJobs`, que não mexe em quem já terminou), solta as travas e só então desconecta o Prisma.
+- **Limites:** o shutdown tem prazo de 10 s e um segundo sinal força a saída. Um sinal que chegue entre obter a trava e registrar o job (milissegundos) não é visto: o boot corrige. No Windows o Node só entrega `SIGINT` (Ctrl+C), então fechar o terminal pula o shutdown e cai no boot; e `pnpm start:local`/`pnpm dev` (wrappers `cmd`) podem matar o `node` antes do hook, então para conferir o shutdown rode o bundle com `node` direto dentro de `apps/api`.
+- **Falha ao gravar o desfecho:** `saveOutcome` retenta (3 tentativas, espera crescente); esgotadas, grava um `failed` genérico para o polling não ficar em `running`.
+- **API caiu no meio** (crash, `SIGKILL`): o shutdown não roda. Ao subir, `failInterruptedYearJobs` marca os jobs `running` como `failed` (500, mensagem sugerindo `repair` ou `DELETE`), junto com `clearYearLocks`. Só funciona porque há **uma instância** da API.
 - **Testes:** `settleYearJobs()` espera os jobs em andamento terminarem, sem `setTimeout` (ver [convencoes.md](./convencoes.md#testes)).
 
 ## Banco de dados (PostgreSQL + Prisma)

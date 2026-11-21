@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { prisma } from "./prisma";
-import { failInterruptedYearJobs, INTERRUPTED_JOB_MESSAGE } from "./year-job";
+import {
+  failInterruptedYearJobs,
+  failYearJobs,
+  INTERRUPTED_JOB_MESSAGE,
+} from "./year-job";
 
 // Sem Postgres: só o método do Prisma usado aqui.
 vi.mock("./prisma", () => ({
@@ -25,5 +29,29 @@ describe("failInterruptedYearJobs", () => {
       }),
     });
     expect(INTERRUPTED_JOB_MESSAGE).toContain("repair");
+  });
+});
+
+describe("failYearJobs", () => {
+  it("marca como failed só os jobs informados que ainda estão running (CA1, CA2)", async () => {
+    vi.mocked(prisma.yearJob.updateMany).mockResolvedValue({ count: 1 });
+
+    await failYearJobs(["job-1", "job-2"]);
+
+    expect(prisma.yearJob.updateMany).toHaveBeenCalledWith({
+      where: { id: { in: ["job-1", "job-2"] }, status: "running" },
+      data: expect.objectContaining({
+        status: "failed",
+        statusCode: 500,
+        result: { success: false, message: INTERRUPTED_JOB_MESSAGE },
+        finishedAt: expect.any(Date),
+      }),
+    });
+  });
+
+  it("não toca no banco sem ids", async () => {
+    await failYearJobs([]);
+
+    expect(prisma.yearJob.updateMany).not.toHaveBeenCalled();
   });
 });

@@ -47,3 +47,4 @@ Regras sempre carregadas: `.claude/rules/git-workflow.md` (branches, commits, me
 | [ci-github-actions](./ci-github-actions/)                     | chore   | concluída |
 | [guardrails-env-idioma](./guardrails-env-idioma/)             | chore   | concluída |
 | [testes-services-e-trava](./testes-services-e-trava/)         | test    | concluída |
+| [jobs-ano-shutdown](./jobs-ano-shutdown/)                     | bugfix  | concluída |
